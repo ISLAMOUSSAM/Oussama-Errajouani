@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Théorie des Nombres — Proportions & Premiers</title>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,600;1,300&family=IBM+Plex+Mono:wght@300;400&family=Syne:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --panel: #16161e;
+    --card: #1c1c26;
+    --border: #2a2a3a;
+    --text: #c8c4d8;
+    --muted: #5a576e;
+    --violet: #9d6ff0;
+    --cyan: #3dcfcf;
+    --gold: #e8b84b;
+    --rose: #e06080;
+    --green: #4ecb8d;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* GRID PATTERN BG */
+  body::before {
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image:
+      linear-gradient(rgba(157,111,240,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(157,111,240,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events:none;
+    z-index:0;
+  }
+
+  /* HEADER */
+  header {
+    position: relative;
+    z-index:1;
+    padding: 80px 40px 65px;
+    text-align: center;
+    background: linear-gradient(180deg, #0a0a10 0%, transparent 100%);
+    border-bottom: 1px solid var(--border);
+    overflow:hidden;
+  }
+
+  /* Animated number rain in bg */
+  .num-rain {
+    position:absolute;
+    inset:0;
+    overflow:hidden;
+    opacity:0.07;
+    pointer-events:none;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color: var(--violet);
+  }
+  .num-rain span {
+    position:absolute;
+    animation: fall linear infinite;
+  }
+
+  @keyframes fall {
+    from { transform: translateY(-20px); opacity:0; }
+    10% { opacity:1; }
+    90% { opacity:1; }
+    to { transform: translateY(180px); opacity:0; }
+  }
+
+  .badge {
+    display:inline-block;
+    background: rgba(157,111,240,0.1);
+    border:1px solid rgba(157,111,240,0.35);
+    color: var(--violet);
+    font-size:10px;
+    letter-spacing:4px;
+    text-transform:uppercase;
+    padding:5px 18px;
+    border-radius:2px;
+    margin-bottom:24px;
+    font-weight:400;
+  }
+  header h1 {
+    font-family:'Spectral', serif;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight:300;
+    line-height:1.1;
+    margin-bottom:18px;
+    letter-spacing:-1px;
+  }
+  header h1 em { color: var(--violet); font-style:italic; }
+  header p {
+    font-size:0.95rem;
+    color: var(--muted);
+    max-width:500px;
+    margin:0 auto;
+    line-height:1.8;
+  }
+
+  /* NAV */
+  nav {
+    position:sticky; top:0; z-index:100;
+    background:rgba(15,15,19,0.95);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--border);
+    padding:11px 24px;
+    display:flex; gap:4px; flex-wrap:wrap; justify-content:center;
+  }
+  nav a {
+    color: var(--muted);
+    text-decoration:none;
+    font-size:11px;
+    letter-spacing:1px;
+    padding:5px 11px;
+    border-radius:4px;
+    transition:all 0.2s;
+    font-family:'IBM Plex Mono', monospace;
+  }
+  nav a:hover { color:var(--violet); background:rgba(157,111,240,0.08); }
+
+  /* MAIN */
+  main {
+    position:relative; z-index:1;
+    max-width:1140px;
+    margin:0 auto;
+    padding:60px 20px 80px;
+    display:grid;
+    gap:0;
+  }
+
+  /* ENTRY */
+  .entry {
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    min-height:320px;
+    border-bottom:1px solid var(--border);
+    opacity:0;
+    transform:translateX(-24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .entry:nth-child(even) { transform:translateX(24px); }
+  .entry.visible { opacity:1; transform:translateX(0); }
+  .entry:first-child { border-top:1px solid var(--border); }
+  .entry:nth-child(even) .card-visual { order:-1; border-right:1px solid var(--border); border-left:none; }
+
+  /* TEXT */
+  .card-text {
+    padding: 44px 50px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    position:relative;
+  }
+  /* Corner accent */
+  .card-text::before {
+    content:'';
+    position:absolute;
+    top:0; left:0;
+    width:3px; height:60px;
+    background: var(--accent-color, var(--violet));
+  }
+
+  .prop-header {
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:18px;
+  }
+  .prop-num {
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    font-weight:400;
+    color: var(--accent-color, var(--violet));
+    border:1px solid;
+    border-color: var(--accent-color, var(--violet));
+    padding:3px 10px;
+    border-radius:3px;
+    letter-spacing:1px;
+    opacity:0.9;
+  }
+  .prop-cat {
+    font-size:10px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color: var(--muted);
+    font-weight:400;
+  }
+
+  .card-text h2 {
+    font-family:'Spectral', serif;
+    font-size:1.55rem;
+    font-weight:300;
+    color:#e8e4f4;
+    margin-bottom:16px;
+    line-height:1.3;
+  }
+  .card-text p {
+    font-size:0.88rem;
+    line-height:1.9;
+    color:#8a879e;
+    margin-bottom:8px;
+  }
+  .card-text p strong { color:var(--text); font-weight:400; }
+
+  .formula {
+    margin-top:14px;
+    background:rgba(0,0,0,0.3);
+    border:1px solid var(--border);
+    border-left:2px solid var(--accent-color, var(--violet));
+    padding:10px 16px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.82rem;
+    color: var(--accent-color, var(--violet));
+    border-radius:0 4px 4px 0;
+    letter-spacing:0.5px;
+  }
+
+  /* VISUAL */
+  .card-visual {
+    background: var(--card);
+    border-left:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px;
+    position:relative;
+    overflow:hidden;
+  }
+  .card-visual::before {
+    content:'';
+    position:absolute;
+    inset:0;
+    background: radial-gradient(circle at 50% 50%, rgba(157,111,240,0.04) 0%, transparent 70%);
+  }
+  .card-visual svg {
+    width:100%;
+    max-width:280px;
+    height:auto;
+    position:relative;
+    z-index:1;
+  }
+
+  /* SVG Anims */
+  @keyframes draw { from{stroke-dashoffset:1000} to{stroke-dashoffset:0} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes blink { 0%,100%{opacity:0.4} 50%{opacity:1} }
+  @keyframes countUp { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes ripple { from{r:4;opacity:1} to{r:30;opacity:0} }
+
+  .d { stroke-dasharray:1000; animation:draw 2s ease forwards; }
+  .fi { animation:fadeIn 0.8s ease 0.5s both; }
+  .bl { animation:blink 2s ease-in-out infinite; }
+  .cu { animation:countUp 0.4s ease both; }
+
+  /* FOOTER */
+  footer {
+    position:relative; z-index:1;
+    text-align:center;
+    padding:44px;
+    border-top:1px solid var(--border);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:3px;
+    color: var(--muted);
+    text-transform:uppercase;
+  }
+
+  @media(max-width:700px){
+    .entry, .entry:nth-child(even) { grid-template-columns:1fr; }
+    .entry:nth-child(even) .card-visual { order:0; border-right:none; border-left:none; border-bottom:1px solid var(--border); }
+    .card-visual { border-left:none; border-bottom:1px solid var(--border); min-height:240px; }
+    .card-text { padding:28px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <!-- Number rain -->
+  <div class="num-rain" aria-hidden="true">
+    <span style="left:5%;animation-duration:4s;animation-delay:0s">2</span>
+    <span style="left:12%;animation-duration:3.5s;animation-delay:1s">7</span>
+    <span style="left:20%;animation-duration:5s;animation-delay:0.3s">13</span>
+    <span style="left:30%;animation-duration:4.2s;animation-delay:1.5s">∞</span>
+    <span style="left:42%;animation-duration:3.8s;animation-delay:0.7s">5</span>
+    <span style="left:55%;animation-duration:4.5s;animation-delay:2s">17</span>
+    <span style="left:65%;animation-duration:3.2s;animation-delay:0.2s">p/q</span>
+    <span style="left:75%;animation-duration:4.8s;animation-delay:1.2s">3</span>
+    <span style="left:85%;animation-duration:3.6s;animation-delay:0.9s">11</span>
+    <span style="left:92%;animation-duration:4.1s;animation-delay:0.5s">∤</span>
+  </div>
+
+  <div class="badge">Théorie des Nombres</div>
+  <h1>Proportions,<br>Premiers &amp; <em>Parité</em></h1>
+  <p>Des carrés et cubes aux nombres premiers, des proportions impossibles à l'infinité — les fondements arithmétiques d'Euclide.</p>
+</header>
+
+<nav>
+  <a href="#s1">I–VI · Carrés & cubes</a>
+  <a href="#s2">VIII–X · Suites</a>
+  <a href="#s3">XII · Diviseurs</a>
+  <a href="#s4">XIII–XV · Premiers</a>
+  <a href="#s5">XVI–XVII · Impossible</a>
+  <a href="#s6">XVIII–XIX · Existence</a>
+  <a href="#s7">XX · Infinité</a>
+  <a href="#s8">XXI–XXIII · Parité</a>
+</nav>
+
+<main>
+
+  <!-- I–VI -->
+  <div class="entry" id="s1" style="--accent-color: #9d6ff0">
+    <div class="card-text">
+      <div class="prop-header">
+        <span class="prop-num">Prop. I–VI</span>
+        <span class="prop-cat">Similitude numérique</span>
+      </div>
+      <h2>Carrés &amp; Cubes comme Produits de Nombres Semblables</h2>
+      <p>Un <strong>nombre carré</strong> (comme 4, 9, 16…) est le produit d'un entier par lui-même. Un <strong>nombre cube</strong> (8, 27, 64…) est le produit de trois facteurs égaux. Entre deux carrés, il existe exactement <strong>un moyen proportionnel</strong>; entre deux cubes, il en faut deux.</p>
+      <p>Deux nombres sont dits "semblables" s'ils ont le même rapport de côtés — notion qui préfigure la similitude géométrique. Le carré de a·b est semblable au carré de a et au carré de b.</p>
+      <div class="formula">n² = n×n  |  n³ = n×n×n  |  √(a²·b²) = ab</div>
+    </div>
+    <div class="card-visual">
+      <svg viewBox="0 0 280 230" fill="none">
+        <!-- Grille = carré -->
+        <g class="fi">
+          <!-- 4x4 grid = 16 = 4² -->
+          <rect x="30" y="30" width="100" height="100" stroke="#9d6ff0" stroke-width="1.5" fill="rgba(157,111,240,0.05)"/>
+          <line x1="55" y1="30" x2="55" y2="130" stroke="rgba(157,111,240,0.3)" stroke-width="0.8"/>
+          <line x1="80" y1="30" x2="80" y2="130" stroke="rgba(157,111,240,0.3)" stroke-width="0.8"/>
+          <line x1="105" y1="30" x2="105" y2="130" stroke="rgba(157,111,240,0.3)" stroke-width="0.8"/>
+          <line x1="30" y1="55" x2="130" y2="55" stroke="rgba(157,111,240,0.3)" stroke-width="0.8"/>
+          <line x1="30" y1="80" x2="130" y2="80" stroke="rgba(157,111,240,0.3)" stroke-width="0.8"/>
+          <line x1="30" y1="105" x2="130" y2="105" stroke="rgba(157,111,240,0.3)" stroke-width="0.8"/>
+          <text x="72" y="82" fill="#9d6ff0" font-size="14" font-family="Spectral,serif" text-anchor="middle">4² = 16</text>
+        </g>
+        <!-- Cube (fil de fer) -->
+        <g class="fi" style="animation-delay:0.5s">
+          <!-- Face avant -->
+          <rect x="155" y="80" width="75" height="75" stroke="#3dcfcf" stroke-width="1.5" fill="rgba(61,207,207,0.04)"/>
+          <!-- Profondeur -->
+          <line x1="155" y1="80" x2="175" y2="60" stroke="#3dcfcf" stroke-width="1" stroke-dasharray="3 3"/>
+          <line x1="230" y1="80" x2="250" y2="60" stroke="#3dcfcf" stroke-width="1"/>
+          <line x1="230" y1="155" x2="250" y2="135" stroke="#3dcfcf" stroke-width="1"/>
+          <line x1="175" y1="60" x2="250" y2="60" stroke="#3dcfcf" stroke-width="1"/>
+          <line x1="250" y1="60" x2="250" y2="135" stroke="#3dcfcf" stroke-width="1"/>
+          <text x="192" y="122" fill="#3dcfcf" font-size="11" font-family="Spectral,serif">3³ = 27</text>
+        </g>
+        <!-- Moyen proportionnel -->
+        <text x="30" y="195" fill="rgba(157,111,240,0.7)" font-size="9" font-family="IBM Plex Mono,monospace">Entre a² et b² : moyen = ab</text>
+        <text x="30" y="210" fill="rgba(61,207,207,0.7)" font-size="9" font-family="IBM Plex Mono,monospace">Entre a³ et b³ : a²b, ab² (2 moyens)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- VIII–X -->
+  <div class="entry" id="s2" style="--accent-color: #3dcfcf">
+    <div class="card-text">
+      <div class="prop-header">
+        <span class="prop-num">Prop. VIII–X</span>
+        <span class="prop-cat">Proportions</span>
+      </div>
+      <h2>Suites Proportionnelles — Propriétés &amp; Conséquences</h2>
+      <p>Une <strong>suite proportionnelle</strong> est une suite de nombres a, b, c, d tels que a/b = c/d (ou a:b::c:d en notation antique). Ces suites vérifient la propriété de permutation : <strong>a·d = b·c</strong> (produit des extrêmes = produit des moyens).</p>
+      <p>On peut permuter, inverser ou composer les rapports. Si a:b::c:d, alors (a+c):(b+d)::a:b (composition). Ces opérations sont les ancêtres de l'algèbre des fractions.</p>
+      <div class="formula">a:b = c:d  ⟺  a·d = b·c  (extrêmes × moyens)</div>
+    </div>
+    <div class="card-visual">
+      <svg viewBox="0 0 280 230" fill="none">
+        <!-- Proportion visuelle : barres -->
+        <g class="fi">
+          <!-- a -->
+          <rect x="30" y="40" width="60" height="22" fill="rgba(61,207,207,0.2)" stroke="#3dcfcf" stroke-width="1.2" rx="2"/>
+          <text x="60" y="55" fill="#3dcfcf" font-size="11" text-anchor="middle" font-family="Spectral,serif">a = 2</text>
+          <!-- b -->
+          <rect x="30" y="75" width="90" height="22" fill="rgba(61,207,207,0.12)" stroke="#3dcfcf" stroke-width="1" rx="2"/>
+          <text x="75" y="90" fill="#3dcfcf" font-size="11" text-anchor="middle" font-family="Spectral,serif">b = 3</text>
+          <!-- Séparateur -->
+          <text x="145" y="87" fill="var(--muted)" font-size="18" font-family="Spectral,serif">::</text>
+          <!-- c -->
+          <rect x="160" y="40" width="80" height="22" fill="rgba(157,111,240,0.2)" stroke="#9d6ff0" stroke-width="1.2" rx="2"/>
+          <text x="200" y="55" fill="#9d6ff0" font-size="11" text-anchor="middle" font-family="Spectral,serif">c = 4</text>
+          <!-- d -->
+          <rect x="160" y="75" width="120" height="22" fill="rgba(157,111,240,0.12)" stroke="#9d6ff0" stroke-width="1" rx="2"/>
+          <text x="220" y="90" fill="#9d6ff0" font-size="11" text-anchor="middle" font-family="Spectral,serif">d = 6</text>
+        </g>
+        <!-- Croix des produits -->
+        <g class="fi" style="animation-delay:0.6s">
+          <line x1="90" y1="40" x2="280" y2="97" stroke="rgba(232,184,75,0.4)" stroke-width="1" stroke-dasharray="4 3"/>
+          <line x1="240" y1="40" x2="30" y2="97" stroke="rgba(232,184,75,0.4)" stroke-width="1" stroke-dasharray="4 3"/>
+          <text x="120" y="130" fill="#e8b84b" font-size="11" font-family="IBM Plex Mono,monospace" text-anchor="middle">2×6 = 3×4 = 12 ✓</text>
+        </g>
+        <!-- Permutations -->
+        <g class="fi" style="animation-delay:1s">
+          <text x="30" y="165" fill="var(--muted)" font-size="9" font-family="IBM Plex Mono,monospace">Permutation : a:c = b:d</text>
+          <text x="30" y="180" fill="var(--muted)" font-size="9" font-family="IBM Plex Mono,monospace">Inversion : b:a = d:c</text>
+          <text x="30" y="195" fill="var(--muted)" font-size="9" font-family="IBM Plex Mono,monospace">Composition : (a+b):b = (c+d):d</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- XII -->
+  <div class="entry" id="s3" style="--accent-color: #e8b84b">
+    <div class="card-text">
+      <div class="prop-header">
+        <span class="prop-num">Prop. XII</span>
+        <span class="prop-cat">Divisibilité</span>
+      </div>
+      <h2>Diviseurs Premiers d'un Terme dans une Proportion</h2>
+      <p>Si un <strong>nombre premier</strong> p divise un terme d'une proportion a:b::c:d (et donc divise le produit a·d = b·c), alors p divise au moins l'un des quatre termes. C'est un ancêtre du <strong>lemme d'Euclide</strong> sur les nombres premiers.</p>
+      <p>Cette proposition est fondamentale : elle dit que les nombres premiers "traversent" les produits. Si p | a·b alors p | a ou p | b — propriété qui caractérise précisément les nombres premiers et les distingue des composés.</p>
+      <div class="formula">p premier, p | a·b  ⟹  p | a  ou  p | b</div>
+    </div>
+    <div class="card-visual">
+      <svg viewBox="0 0 280 230" fill="none">
+        <!-- Nœud central = produit -->
+        <circle cx="140" cy="115" r="32" stroke="#e8b84b" stroke-width="1.5" fill="rgba(232,184,75,0.07)" class="d" style="stroke-dasharray:200"/>
+        <text x="140" y="112" fill="#e8b84b" font-size="12" font-family="Spectral,serif" text-anchor="middle">a · b</text>
+        <text x="140" y="127" fill="rgba(232,184,75,0.6)" font-size="9" font-family="IBM Plex Mono,monospace" text-anchor="middle">= 42</text>
+
+        <!-- p divise -->
+        <circle cx="140" cy="30" r="22" stroke="#e06080" stroke-width="1.5" fill="rgba(224,96,128,0.08)" class="fi"/>
+        <text x="140" y="27" fill="#e06080" font-size="11" font-family="Spectral,serif" text-anchor="middle">p = 7</text>
+        <text x="140" y="40" fill="rgba(224,96,128,0.6)" font-size="9" text-anchor="middle">premier</text>
+
+        <!-- Flèche p → a·b -->
+        <line x1="140" y1="52" x2="140" y2="83" stroke="#e06080" stroke-width="1.5" stroke-dasharray="4 3" class="fi"/>
+        <text x="148" y="70" fill="#e06080" font-size="9">p | a·b</text>
+
+        <!-- Donc : a ou b -->
+        <circle cx="75" cy="185" r="28" stroke="#4ecb8d" stroke-width="1.5" fill="rgba(78,203,141,0.07)" class="fi" style="animation-delay:0.5s"/>
+        <text x="75" y="190" fill="#4ecb8d" font-size="12" font-family="Spectral,serif" text-anchor="middle">p | a</text>
+
+        <circle cx="205" cy="185" r="28" stroke="#4ecb8d" stroke-width="1.5" fill="rgba(78,203,141,0.07)" class="fi" style="animation-delay:0.8s"/>
+        <text x="205" y="190" fill="#4ecb8d" font-size="12" font-family="Spectral,serif" text-anchor="middle">p | b</text>
+
+        <!-- Flèches -->
+        <line x1="120" y1="143" x2="88" y2="160" stroke="rgba(78,203,141,0.5)" stroke-width="1.2" class="fi" style="animation-delay:0.5s"/>
+        <line x1="160" y1="143" x2="192" y2="160" stroke="rgba(78,203,141,0.5)" stroke-width="1.2" class="fi" style="animation-delay:0.8s"/>
+
+        <!-- OU -->
+        <text x="135" y="178" fill="var(--muted)" font-size="14" font-family="Spectral,serif" font-style="italic">ou</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- XIII–XV -->
+  <div class="entry" id="s4" style="--accent-color: #4ecb8d">
+    <div class="card-text">
+      <div class="prop-header">
+        <span class="prop-num">Prop. XIII–XV</span>
+        <span class="prop-cat">Nombres premiers</span>
+      </div>
+      <h2>Nombres Premiers &amp; Proportions — Ordre et Divisibilité</h2>
+      <p>Si des nombres premiers forment une proportion a:b::c:d, des relations d'<strong>ordre et de divisibilité</strong> strictes s'imposent. En particulier, le plus petit terme d'une proportion ne peut pas être divisé par un nombre plus grand qu'un autre terme de la proportion.</p>
+      <p>Ces propositions établissent que les nombres premiers sont les "<strong>atomes</strong>" de l'arithmétique : tout entier se décompose en premiers de façon unique (prémisse du théorème fondamental de l'arithmétique). L'ordre entre premiers respecte l'ordre des proportions.</p>
+      <div class="formula">Tout entier n &gt; 1 est premier ou produit de premiers</div>
+    </div>
+    <div class="card-visual">
+      <svg viewBox="0 0 280 230" fill="none">
+        <!-- Arbre de factorisation de 60 -->
+        <text x="140" y="28" fill="#4ecb8d" font-size="14" font-family="Spectral,serif" text-anchor="middle">60</text>
+        <circle cx="140" cy="22" r="16" stroke="#4ecb8d" stroke-width="1.2" fill="rgba(78,203,141,0.07)"/>
+
+        <line x1="125" y1="35" x2="95" y2="65" stroke="rgba(78,203,141,0.5)" stroke-width="1.2"/>
+        <line x1="155" y1="35" x2="185" y2="65" stroke="rgba(78,203,141,0.5)" stroke-width="1.2"/>
+
+        <circle cx="90" cy="73" r="16" stroke="#3dcfcf" stroke-width="1.2" fill="rgba(61,207,207,0.07)"/>
+        <text x="90" y="77" fill="#3dcfcf" font-size="12" font-family="Spectral,serif" text-anchor="middle">4</text>
+        <circle cx="190" cy="73" r="16" stroke="#3dcfcf" stroke-width="1.2" fill="rgba(61,207,207,0.07)"/>
+        <text x="190" y="77" fill="#3dcfcf" font-size="12" font-family="Spectral,serif" text-anchor="middle">15</text>
+
+        <line x1="78" y1="86" x2="58" y2="115" stroke="rgba(61,207,207,0.4)" stroke-width="1.2"/>
+        <line x1="102" y1="86" x2="122" y2="115" stroke="rgba(61,207,207,0.4)" stroke-width="1.2"/>
+        <line x1="177" y1="86" x2="157" y2="115" stroke="rgba(61,207,207,0.4)" stroke-width="1.2"/>
+        <line x1="203" y1="86" x2="223" y2="115" stroke="rgba(61,207,207,0.4)" stroke-width="1.2"/>
+
+        <!-- Feuilles = premiers -->
+        <circle cx="55" cy="122" r="14" stroke="#e8b84b" stroke-width="1.5" fill="rgba(232,184,75,0.1)"/>
+        <text x="55" y="126" fill="#e8b84b" font-size="12" font-family="Spectral,serif" text-anchor="middle">2</text>
+        <circle cx="125" cy="122" r="14" stroke="#e8b84b" stroke-width="1.5" fill="rgba(232,184,75,0.1)"/>
+        <text x="125" y="126" fill="#e8b84b" font-size="12" font-family="Spectral,serif" text-anchor="middle">2</text>
+        <circle cx="155" cy="122" r="14" stroke="#e8b84b" stroke-width="1.5" fill="rgba(232,184,75,0.1)"/>
+        <text x="155" y="126" fill="#e8b84b" font-size="12" font-family="Spectral,serif" text-anchor="middle">3</text>
+        <circle cx="225" cy="122" r="14" stroke="#e8b84b" stroke-width="1.5" fill="rgba(232,184,75,0.1)"/>
+        <text x="225" y="126" fill="#e8b84b" font-size="12" font-family="Spectral,serif" text-anchor="middle">5</text>
+
+        <text x="80" y="160" fill="rgba(232,184,75,0.8)" font-size="10" font-family="IBM Plex Mono,monospace">60 = 2² × 3 × 5</text>
+        <text x="80" y="175" fill="var(--muted)" font-size="9" font-family="IBM Plex Mono,monospace">décomposition unique en premiers</text>
+
+        <!-- Étiquette "premiers" -->
+        <text x="20" y="215" fill="rgba(232,184,75,0.5)" font-size="9">⬡ = nombre premier (atome)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- XVI–XVII -->
+  <div class="entry" id="s5" style="--accent-color: #e06080">
+    <div class="card-text">
+      <div class="prop-header">
+        <span class="prop-num">Prop. XVI–XVII</span>
+        <span class="prop-cat">Impossibilité</span>
+      </div>
+      <h2>Impossibilité de Certaines Proportions Numériques</h2>
+      <p>Certaines proportions sont <strong>impossibles</strong> entre nombres entiers. La plus célèbre : il n'existe pas d'entiers a, b tels que a:b = √2 (la diagonale du carré est <strong>incommensurable</strong> avec son côté). Euclide prouve ces impossibilités par l'absurde.</p>
+      <p>Si a/b est irréductible et a² = 2b², on montre que a serait pair, puis b aussi — contradiction. Ces propositions annoncent les <strong>nombres irrationnels</strong>, un résultat fondateur de la mathématique grecque qui troubla profondément les pythagoriciens.</p>
+      <div class="formula">∄ a,b ∈ ℤ tels que (a/b)² = 2 — √2 est irrationnel</div>
+    </div>
+    <div class="card-visual">
+      <svg viewBox="0 0 280 230" fill="none">
+        <!-- Carré de côté 1 -->
+        <rect x="60" y="60" width="100" height="100" stroke="rgba(224,96,128,0.5)" stroke-width="1.5" fill="rgba(224,96,128,0.04)"/>
+        <!-- Diagonale -->
+        <line x1="60" y1="60" x2="160" y2="160" stroke="#e06080" stroke-width="2" class="d"/>
+        <!-- Annotation côté -->
+        <text x="100" y="178" fill="rgba(255,255,255,0.5)" font-size="11" font-family="Spectral,serif" text-anchor="middle">1</text>
+        <text x="35" y="115" fill="rgba(255,255,255,0.5)" font-size="11" font-family="Spectral,serif">1</text>
+        <!-- Annotation diagonale -->
+        <text x="95" y="105" fill="#e06080" font-size="11" font-family="Spectral,serif" transform="rotate(45 95 105)">√2</text>
+
+        <!-- Croix rouge = pas d'entiers -->
+        <circle cx="220" cy="70" r="28" stroke="#e06080" stroke-width="1.2" fill="rgba(224,96,128,0.06)" class="fi" style="animation-delay:0.7s"/>
+        <text x="220" y="63" fill="#e06080" font-size="10" text-anchor="middle" font-family="Spectral,serif">a</text>
+        <line x1="207" y1="77" x2="233" y2="77" stroke="rgba(224,96,128,0.6)" stroke-width="1"/>
+        <text x="220" y="88" fill="#e06080" font-size="10" text-anchor="middle" font-family="Spectral,serif">b</text>
+        <text x="220" y="105" fill="#e06080" font-size="18" text-anchor="middle">≠ √2</text>
+        <text x="220" y="118" fill="var(--muted)" font-size="8" text-anchor="middle" font-family="IBM Plex Mono,monospace">∀ a,b ∈ ℤ</text>
+
+        <!-- Preuve par l'absurde -->
+        <text x="30" y="195" fill="var(--muted)" font-size="8" font-family="IBM Plex Mono,monospace">Preuve : si a²=2b², a pair → b pair</text>
+        <text x="30" y="208" fill="var(--muted)" font-size="8" font-family="IBM Plex Mono,monospace">→ contradiction (a/b non réduit) □</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- XVIII–XIX -->
+  <div class="entry" id="s6" style="--accent-color: #3dcfcf">
+    <div class="card-text">
+      <div class="prop-header">
+        <span class="prop-num">Prop. XVIII–XIX</span>
+        <span class="prop-cat">Conditions d'existence</span>
+      </div>
+      <h2>Conditions d'Existence d'une Proportion</h2>
+      <p>Pour que quatre nombres a, b, c, d forment une proportion a:b::c:d, des conditions nécessaires et suffisantes s'imposent. En particulier, la <strong>moyenne géométrique</strong> entre deux nombres n'existe pas toujours en entiers — elle exige que leur produit soit un carré parfait.</p>
+      <p>Si a:b::b:c, alors b est <strong>moyen proportionnel</strong> entre a et c : b² = a·c. Cela n'a de solution entière que si a·c est un carré. Ces conditions anticipent la théorie des extensions algébriques.</p>
+      <div class="formula">b moyen entre a et c  ⟺  b² = a·c  (a·c carré parfait)</div>
+    </div>
+    <div class="card-visual">
+      <svg viewBox="0 0 280 230" fill="none">
+        <!-- Axe numérique -->
+        <line x1="20" y1="115" x2="260" y2="115" stroke="rgba(61,207,207,0.3)" stroke-width="1.5" class="d"/>
+
+        <!-- a=4, b=6, c=9 : proportion car 6²=36=4×9 -->
+        <circle cx="60" cy="115" r="5" fill="#3dcfcf" class="fi"/>
+        <text x="60" y="103" fill="#3dcfcf" font-size="11" text-anchor="middle" font-family="Spectral,serif">a=4</text>
+
+        <circle cx="150" cy="115" r="6" fill="#9d6ff0" class="fi" style="animation-delay:0.3s"/>
+        <text x="150" y="103" fill="#9d6ff0" font-size="11" text-anchor="middle" font-family="Spectral,serif">b=6</text>
+
+        <circle cx="220" cy="115" r="5" fill="#3dcfcf" class="fi" style="animation-delay:0.6s"/>
+        <text x="220" y="103" fill="#3dcfcf" font-size="11" text-anchor="middle" font-family="Spectral,serif">c=9</text>
+
+        <!-- Arc de proportion -->
+        <path d="M 60,115 Q 150,60 220,115" stroke="#9d6ff0" stroke-width="1.2" fill="none" stroke-dasharray="5 3" class="fi" style="animation-delay:0.8s"/>
+
+        <!-- Vérification -->
+        <text x="140" y="150" fill="#9d6ff0" font-size="12" font-family="IBM Plex Mono,monospace" text-anchor="middle">b² = 36 = 4 × 9 ✓</text>
+
+        <!-- Contre-exemple -->
+        <rect x="20" y="175" width="240" height="45" stroke="rgba(224,96,128,0.2)" stroke-width="1" rx="4" fill="rgba(224,96,128,0.04)"/>
+        <text x="140" y="193" fill="#e06080" font-size="9" font-family="IBM Plex Mono,monospace" text-anchor="middle">Contre-ex : a=2, c=3</text>
+        <text x="140" y="208" fill="rgba(224,96,128,0.7)" font-size="9" font-family="IBM Plex Mono,monospace" text-anchor="middle">b²=6 → b=√6 ∉ ℤ (pas de moyen entier)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- XX -->
+  <div class="entry" id="s7" style="--accent-color: #e8b84b">
+    <div class="card-text">
+      <div class="prop-header">
+        <span class="prop-num">Prop. XX</span>
+        <span class="prop-cat">Théorème célèbre</span>
+      </div>
+      <h2>Infinité des Nombres Premiers</h2>
+      <p>Il existe une <strong>infinité de nombres premiers</strong>. C'est l'un des théorèmes les plus célèbres de toute l'histoire des mathématiques, démontré par Euclide par un argument d'une beauté et d'une simplicité remarquables.</p>
+      <p><strong>Preuve :</strong> supposons qu'il n'existe qu'un nombre fini de premiers p₁, p₂,…, pₙ. Posons N = p₁·p₂·…·pₙ + 1. N n'est divisible par aucun pᵢ (il reste 1). Donc N est premier ou a un facteur premier hors de la liste — contradiction.</p>
+      <div class="formula">N = p₁·p₂·…·pₙ + 1 → contradiction → infinité de premiers</div>
+    </div>
+    <div class="card-visual">
+      <svg viewBox="0 0 280 230" fill="none">
+        <!-- Spirale de nombres premiers (crible visuel) -->
+        <text x="140" y="22" fill="var(--muted)" font-size="9" font-family="IBM Plex Mono,monospace" text-anchor="middle">Crible d'Ératosthène</text>
+
+        <!-- Grille de nombres 1-49 -->
+        <g font-family="IBM Plex Mono,monospace" font-size="9">
+          <!-- Rangée 1: 1-7 -->
+          <text x="20" y="45" fill="var(--muted)">1</text>
+          <text x="50" y="45" fill="#e8b84b" font-size="10">2</text>
+          <text x="80" y="45" fill="#e8b84b" font-size="10">3</text>
+          <text x="110" y="45" fill="var(--muted)">4</text>
+          <text x="140" y="45" fill="#e8b84b" font-size="10">5</text>
+          <text x="170" y="45" fill="var(--muted)">6</text>
+          <text x="200" y="45" fill="#e8b84b" font-size="10">7</text>
+          <!-- Rangée 2: 8-14 -->
+          <text x="20" y="70" fill="var(--muted)">8</text>
+          <text x="50" y="70" fill="var(--muted)">9</text>
+          <text x="80" y="70" fill="var(--muted)">10</text>
+          <text x="110" y="70" fill="#e8b84b" font-size="10">11</text>
+          <text x="140" y="70" fill="var(--muted)">12</text>
+          <text x="170" y="70" fill="#e8b84b" font-size="10">13</text>
+          <text x="200" y="70" fill="var(--muted)">14</text>
+          <!-- Rangée 3 -->
+          <text x="20" y="95" fill="var(--muted)">15</text>
+          <text x="50" y="95" fill="var(--muted)">16</text>
+          <text x="80" y="95" fill="#e8b84b" font-size="10">17</text>
+          <text x="110" y="95" fill="var(--muted)">18</text>
+          <text x="140" y="95" fill="#e8b84b" font-size="10">19</text>
+          <text x="170" y="95" fill="var(--muted)">20</text>
+          <text x="200" y="95" fill="var(--muted)">21</text>
+          <!-- Rangée 4 -->
+          <text x="20" y="120" fill="var(--muted)">22</text>
+          <text x="50" y="120" fill="#e8b84b" font-size="10">23</text>
+          <text x="80" y="120" fill="var(--muted)">24</text>
+          <text x="110" y="120" fill="var(--muted)">25</text>
+          <text x="140" y="120" fill="var(--muted)">26</text>
+          <text x="170" y="120" fill="var(--muted)">27</text>
+          <text x="200" y="120" fill="var(--muted)">28</text>
+          <!-- Rangée 5 -->
+          <text x="20" y="145" fill="#e8b84b" font-size="10">29</text>
+          <text x="50" y="145" fill="var(--muted)">30</text>
+          <text x="80" y="145" fill="#e8b84b" font-size="10">31</text>
+          <text x="110" y="145" fill="var(--muted)">32</text>
+          <text x="140" y="145" fill="var(--muted)">33</text>
+          <text x="170" y="145" fill="var(--muted)">34</text>
+          <text x="200" y="145" fill="var(--muted)">35</text>
+        </g>
+
+        <!-- ... infini -->
+        <text x="235" y="45" fill="rgba(232,184,75,0.5)" font-size="14" font-family="Spectral,serif">···</text>
+        <text x="235" y="145" fill="rgba(232,184,75,0.5)" font-size="14" font-family="Spectral,serif">···</text>
+
+        <!-- Flèche infini -->
+        <text x="80" y="185" fill="#e8b84b" font-size="28" font-family="Spectral,serif" text-anchor="middle">∞</text>
+        <text x="145" y="185" fill="rgba(232,184,75,0.7)" font-size="10" font-family="IBM Plex Mono,monospace">premiers</text>
+        <text x="145" y="200" fill="var(--muted)" font-size="9" font-family="IBM Plex Mono,monospace">(preuve par contradiction)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- XXI–XXIII -->
+  <div class="entry" id="s8" style="--accent-color: #4ecb8d">
+    <div class="card-text">
+      <div class="prop-header">
+        <span class="prop-num">Prop. XXI–XXIII</span>
+        <span class="prop-cat">Parité</span>
+      </div>
+      <h2>Sommes de Nombres Pairs &amp; Impairs — Propriétés</h2>
+      <p>Les propositions finales établissent les règles de <strong>parité</strong> : somme de pairs = pair, somme de pairs nombres impairs = pair si le compte est pair, impair si le compte est impair. Pair × quelconque = pair. Impair × impair = impair.</p>
+      <p>Ces résultats sont les fondements de l'<strong>arithmétique modulaire</strong> (arithmétique modulo 2). Ils sont aussi liés aux propriétés des puissances : une puissance paire d'un impair est impaire, une puissance d'un pair est pair.</p>
+      <div class="formula">pair + pair = pair  |  impair + impair = pair  |  pair + impair = impair</div>
+    </div>
+    <div class="card-visual">
+      <svg viewBox="0 0 280 230" fill="none">
+        <!-- Table de parité visuelle -->
+        <!-- En-têtes -->
+        <text x="80" y="35" fill="var(--muted)" font-size="10" text-anchor="middle" font-family="IBM Plex Mono,monospace">PAIR</text>
+        <text x="200" y="35" fill="var(--muted)" font-size="10" text-anchor="middle" font-family="IBM Plex Mono,monospace">IMPAIR</text>
+
+        <!-- Pair + pair -->
+        <rect x="20" y="50" width="120" height="38" rx="4" stroke="#4ecb8d" stroke-width="1" fill="rgba(78,203,141,0.06)"/>
+        <text x="80" y="72" fill="#4ecb8d" font-size="11" text-anchor="middle" font-family="Spectral,serif">P + P = Pair</text>
+        <!-- Impair + impair -->
+        <rect x="140" y="50" width="120" height="38" rx="4" stroke="#4ecb8d" stroke-width="1" fill="rgba(78,203,141,0.06)"/>
+        <text x="200" y="72" fill="#4ecb8d" font-size="11" text-anchor="middle" font-family="Spectral,serif">I + I = Pair</text>
+
+        <!-- Pair + impair -->
+        <rect x="80" y="100" width="120" height="38" rx="4" stroke="#e06080" stroke-width="1" fill="rgba(224,96,128,0.06)"/>
+        <text x="140" y="122" fill="#e06080" font-size="11" text-anchor="middle" font-family="Spectral,serif">P + I = Impair</text>
+
+        <!-- Multiplications -->
+        <line x1="20" y1="155" x2="260" y2="155" stroke="var(--border)" stroke-width="1"/>
+        <text x="140" y="173" fill="var(--muted)" font-size="9" text-anchor="middle" font-family="IBM Plex Mono,monospace">Multiplication</text>
+
+        <rect x="20" y="180" width="70" height="30" rx="3" stroke="#4ecb8d" stroke-width="1" fill="rgba(78,203,141,0.05)"/>
+        <text x="55" y="199" fill="#4ecb8d" font-size="9" text-anchor="middle" font-family="Spectral,serif">P × P = P</text>
+
+        <rect x="100" y="180" width="70" height="30" rx="3" stroke="#4ecb8d" stroke-width="1" fill="rgba(78,203,141,0.05)"/>
+        <text x="135" y="199" fill="#4ecb8d" font-size="9" text-anchor="middle" font-family="Spectral,serif">P × I = P</text>
+
+        <rect x="180" y="180" width="80" height="30" rx="3" stroke="#e8b84b" stroke-width="1" fill="rgba(232,184,75,0.05)"/>
+        <text x="220" y="199" fill="#e8b84b" font-size="9" text-anchor="middle" font-family="Spectral,serif">I × I = I</text>
+
+        <!-- Mod 2 note -->
+        <text x="140" y="222" fill="var(--muted)" font-size="8" text-anchor="middle" font-family="IBM Plex Mono,monospace">≡ arithmétique modulo 2</text>
+      </svg>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Théorie des Nombres · Proportions &amp; Nombres Premiers · Prop. I–XXIII
+</footer>
+
+<script>
+  const entries = document.querySelectorAll('.entry');
+  const io = new IntersectionObserver(es => {
+    es.forEach(e => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), 80);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  entries.forEach(e => io.observe(e));
+</script>
+</body>
+</html>
