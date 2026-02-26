@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solides de Platon — Les Cinq Polyèdres Parfaits</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --void: #050508;
+    --deep: #0a0a14;
+    --panel: #0e0e1c;
+    --border: #1e1e35;
+    --text: #c8c5e0;
+    --muted: #4a4870;
+    --gold: #d4a843;
+    --silver: #8fb0d0;
+    --emerald: #3db88a;
+    --violet: #8060d0;
+    --rose: #d05080;
+    --sky: #40a0e0;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* Stars */
+  body::before {
+    content:'';
+    position:fixed; inset:0;
+    background:
+      radial-gradient(1px 1px at 15% 25%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 35% 75%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 75% 55%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 85%, rgba(255,255,255,0.35) 0%, transparent 100%),
+      radial-gradient(1px 1px at 5% 90%, rgba(255,255,255,0.25) 0%, transparent 100%),
+      radial-gradient(1px 1px at 92% 30%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 48% 48%, rgba(255,255,255,0.2) 0%, transparent 100%);
+    pointer-events:none; z-index:0;
+  }
+
+  /* HEADER */
+  header {
+    position:relative; z-index:1;
+    min-height: 100vh;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    text-align:center;
+    padding:80px 40px;
+    background: radial-gradient(ellipse at 50% 40%, rgba(212,168,67,0.06) 0%, transparent 60%);
+    border-bottom:1px solid var(--border);
+    overflow:hidden;
+  }
+
+  /* Rotating geometry in header */
+  .bg-geo {
+    position:absolute;
+    inset:0;
+    display:flex; align-items:center; justify-content:center;
+    pointer-events:none;
+    opacity:0.04;
+  }
+  .bg-geo svg {
+    width: min(700px, 90vw);
+    height: min(700px, 90vw);
+    animation: rotateSlow 60s linear infinite;
+  }
+  @keyframes rotateSlow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+  .pre-title {
+    font-family:'Space Mono', monospace;
+    font-size:10px; letter-spacing:6px;
+    text-transform:uppercase;
+    color: var(--gold);
+    border:1px solid rgba(212,168,67,0.3);
+    padding:6px 22px; border-radius:100px;
+    margin-bottom:32px;
+    opacity:0; animation:fadeUp 1s ease 0.3s forwards;
+  }
+  header h1 {
+    font-family:'Cinzel', serif;
+    font-size: clamp(2.2rem, 6vw, 5.5rem);
+    font-weight:400; letter-spacing:2px;
+    line-height:1.15; margin-bottom:24px;
+    opacity:0; animation:fadeUp 1s ease 0.6s forwards;
+  }
+  header h1 span { color:var(--gold); display:block; font-size:0.6em; letter-spacing:6px; }
+  header p.lead {
+    font-size:1.1rem; line-height:1.9;
+    color:rgba(200,197,224,0.6);
+    max-width:560px;
+    opacity:0; animation:fadeUp 1s ease 0.9s forwards;
+  }
+  header .scroll-hint {
+    position:absolute; bottom:40px; left:50%;
+    transform:translateX(-50%);
+    color:var(--muted); font-size:11px;
+    letter-spacing:3px; font-family:'Space Mono', monospace;
+    opacity:0; animation:fadeUp 1s ease 1.5s forwards;
+  }
+  .scroll-hint::after {
+    content:'↓'; display:block; text-align:center;
+    margin-top:6px;
+    animation: bounce 2s ease-in-out infinite;
+  }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  /* NAV */
+  nav {
+    position:sticky; top:0; z-index:100;
+    background:rgba(5,5,8,0.95);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    padding:12px 24px;
+    display:flex; gap:6px; flex-wrap:wrap; justify-content:center;
+  }
+  nav a {
+    color:var(--muted);
+    text-decoration:none;
+    font-family:'Space Mono', monospace;
+    font-size:10px; letter-spacing:1px;
+    padding:5px 12px; border-radius:3px;
+    transition:all 0.2s;
+  }
+  nav a:hover { color:var(--gold); background:rgba(212,168,67,0.08); }
+
+  /* SECTIONS */
+  main {
+    position:relative; z-index:1;
+    max-width:1200px; margin:0 auto;
+    padding:80px 20px;
+    display:grid; gap:60px;
+  }
+
+  /* BIG CARD */
+  .solid-card {
+    display:grid;
+    grid-template-columns:1fr 420px;
+    gap:0;
+    border:1px solid var(--border);
+    border-radius:8px; overflow:hidden;
+    background:var(--panel);
+    opacity:0; transform:translateY(40px);
+    transition:opacity 0.7s ease, transform 0.7s ease;
+    box-shadow:0 4px 60px rgba(0,0,0,0.4);
+  }
+  .solid-card:hover { box-shadow:0 8px 80px rgba(0,0,0,0.6); }
+  .solid-card.visible { opacity:1; transform:translateY(0); }
+  .solid-card:nth-child(even) { grid-template-columns:420px 1fr; }
+  .solid-card:nth-child(even) .card-3d { order:-1; }
+
+  /* TEXT */
+  .card-info {
+    padding:50px 54px;
+    display:flex; flex-direction:column; justify-content:center;
+    position:relative;
+    border-right:1px solid var(--border);
+  }
+  .solid-card:nth-child(even) .card-info {
+    border-right:none;
+    border-left:1px solid var(--border);
+  }
+
+  /* Accent line top */
+  .card-info::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg, transparent, var(--accent-col), transparent);
+  }
+
+  .prop-badge {
+    display:flex; align-items:center; gap:10px;
+    margin-bottom:20px;
+  }
+  .prop-id {
+    font-family:'Space Mono', monospace;
+    font-size:10px; letter-spacing:2px;
+    color: var(--accent-col);
+    border:1px solid; border-color:var(--accent-col);
+    padding:4px 12px; border-radius:3px;
+    opacity:0.9;
+  }
+  .prop-type {
+    font-family:'Space Mono', monospace;
+    font-size:9px; letter-spacing:3px;
+    text-transform:uppercase; color:var(--muted);
+  }
+
+  .card-info h2 {
+    font-family:'Cinzel', serif;
+    font-size:1.8rem; font-weight:400;
+    color:#e8e5f8; margin-bottom:18px; line-height:1.2;
+  }
+  .card-info p {
+    font-size:1rem; line-height:1.9;
+    color:#7a788e; margin-bottom:10px;
+  }
+  .card-info p strong { color:var(--text); font-weight:400; }
+
+  /* Stats grid */
+  .stats {
+    display:grid; grid-template-columns:1fr 1fr 1fr;
+    gap:10px; margin-top:18px;
+  }
+  .stat {
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:4px; padding:10px 12px;
+    text-align:center;
+  }
+  .stat-val {
+    font-family:'Cinzel', serif;
+    font-size:1.6rem; color:var(--accent-col);
+    line-height:1;
+  }
+  .stat-label {
+    font-family:'Space Mono', monospace;
+    font-size:8px; letter-spacing:2px;
+    color:var(--muted); margin-top:4px;
+    text-transform:uppercase;
+  }
+
+  .formula {
+    margin-top:16px;
+    background:rgba(0,0,0,0.3);
+    border:1px solid var(--border);
+    border-left:2px solid var(--accent-col);
+    padding:11px 16px; border-radius:0 4px 4px 0;
+    font-family:'Space Mono', monospace;
+    font-size:0.75rem; color:var(--accent-col);
+    line-height:1.7;
+  }
+
+  /* 3D VISUAL */
+  .card-3d {
+    background:radial-gradient(ellipse at center, rgba(20,20,40,0.8) 0%, var(--void) 100%);
+    display:flex; align-items:center; justify-content:center;
+    padding:40px; min-height:360px;
+    position:relative; overflow:hidden;
+  }
+  .card-3d::before {
+    content:'';
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at center, rgba(var(--glow-rgb,212,168,67),0.05) 0%, transparent 65%);
+  }
+  .card-3d svg {
+    width:100%; max-width:300px; height:auto;
+    position:relative; z-index:1;
+    filter:drop-shadow(0 0 30px rgba(var(--glow-rgb,212,168,67),0.2));
+  }
+
+  /* Animated SVG solids */
+  @keyframes rotateSolid {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(3deg) scale(1.02); }
+    100% { transform: rotate(0deg) scale(1); }
+  }
+  @keyframes drawEdge { from{stroke-dashoffset:600} to{stroke-dashoffset:0} }
+  @keyframes glow { 0%,100%{opacity:0.4} 50%{opacity:1} }
+  @keyframes pulse3d { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+
+  .solid-svg { animation:pulse3d 5s ease-in-out infinite; }
+  .edge { stroke-dasharray:600; animation:drawEdge 2s ease forwards; }
+  .glow-el { animation:glow 3s ease-in-out infinite; }
+
+  /* FOOTER */
+  footer {
+    position:relative; z-index:1;
+    background:var(--deep);
+    border-top:1px solid var(--border);
+    text-align:center; padding:50px 40px;
+    font-family:'Space Mono', monospace;
+    font-size:10px; letter-spacing:3px;
+    color:var(--muted); text-transform:uppercase;
+  }
+  footer .phi {
+    font-family:'Cinzel', serif;
+    font-size:3rem; color:rgba(212,168,67,0.15);
+    display:block; margin-bottom:16px;
+    letter-spacing:10px;
+  }
+
+  @media(max-width:800px){
+    .solid-card, .solid-card:nth-child(even) { grid-template-columns:1fr; }
+    .solid-card:nth-child(even) .card-3d { order:0; }
+    .card-3d { min-height:280px; }
+    .card-info { border-right:none; border-left:none; border-top:1px solid var(--border); padding:32px 24px; }
+    .solid-card:nth-child(even) .card-info { border-left:none; }
+    header { min-height:auto; padding:80px 30px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bg-geo" aria-hidden="true">
+    <svg viewBox="0 0 400 400" fill="none">
+      <!-- Pentagone -->
+      <polygon points="200,10 382,145 314,369 86,369 18,145" stroke="white" stroke-width="0.5"/>
+      <!-- Étoile intérieure -->
+      <polygon points="200,10 86,369 382,145 18,145 314,369" stroke="white" stroke-width="0.3"/>
+      <!-- Cercle -->
+      <circle cx="200" cy="200" r="190" stroke="white" stroke-width="0.3"/>
+      <circle cx="200" cy="200" r="130" stroke="white" stroke-width="0.2"/>
+    </svg>
+  </div>
+
+  <div class="pre-title">Euclide — Livre XIII</div>
+  <h1>Les Cinq Solides<br><span>de Platon</span></h1>
+  <p class="lead">Du pentagone et du nombre d'or aux cinq polyèdres parfaits — la conclusion cosmique des Éléments d'Euclide, couronnement de toute la géométrie grecque.</p>
+  <div class="scroll-hint">Défiler pour explorer</div>
+</header>
+
+<nav>
+  <a href="#s1">I–V · Nombre d'or</a>
+  <a href="#s2">VI–IX · Pentagone</a>
+  <a href="#s3">X–XII · Tétraèdre &amp; Octaèdre</a>
+  <a href="#s4">XIII–XV · Cube</a>
+  <a href="#s5">XVI–XVII · Dodécaèdre</a>
+  <a href="#s6">XVIII · Icosaèdre</a>
+</nav>
+
+<main>
+
+  <!-- I–V : Pentagone et nombre d'or -->
+  <div class="solid-card" id="s1" style="--accent-col:#d4a843; --glow-rgb:212,168,67">
+    <div class="card-info">
+      <div class="prop-badge">
+        <span class="prop-id">Prop. I–V</span>
+        <span class="prop-type">Fondements</span>
+      </div>
+      <h2>Pentagone &amp; Nombre d'Or</h2>
+      <p>Les cinq premières propositions étudient la <strong>section dorée</strong> : diviser un segment AB en un point M tel que AB/AM = AM/MB. Ce rapport vaut φ = (1+√5)/2 ≈ 1,618…, le <strong>nombre d'or</strong>.</p>
+      <p>Le pentagone régulier est gouverné par φ partout : le rapport diagonale/côté est exactement φ, les triangles isocèles qui le composent sont les <strong>triangles dorés</strong>, et les subdivisions infinies créent une spirale logarithmique.</p>
+      <p>Prop. III : dans un triangle isocèle de sommet 36°, le rapport des côtés est φ. Ces propriétés sont la clé de toutes les constructions suivantes, notamment le dodécaèdre.</p>
+      <div class="stats">
+        <div class="stat"><div class="stat-val">φ</div><div class="stat-label">Nombre d'or</div></div>
+        <div class="stat"><div class="stat-val">36°</div><div class="stat-label">Angle doré</div></div>
+        <div class="stat"><div class="stat-val">5</div><div class="stat-label">Symétrie</div></div>
+      </div>
+      <div class="formula">φ = (1+√5)/2 ≈ 1.6180339…
+φ² = φ + 1  |  1/φ = φ − 1
+diagonale/côté = φ  (pentagone)</div>
+    </div>
+    <div class="card-3d">
+      <svg viewBox="0 0 300 300" fill="none" class="solid-svg">
+        <!-- Cercle de construction -->
+        <circle cx="150" cy="150" r="110" stroke="rgba(212,168,67,0.15)" stroke-width="1" fill="none"/>
+        <!-- Pentagone régulier inscrit -->
+        <polygon points="150,40 253,113 214,233 86,233 47,113"
+          stroke="#d4a843" stroke-width="2" fill="rgba(212,168,67,0.06)" class="edge"/>
+        <!-- Diagonales = étoile -->
+        <polygon points="150,40 86,233 253,113 47,113 214,233"
+          stroke="rgba(212,168,67,0.4)" stroke-width="1" fill="rgba(212,168,67,0.04)" class="edge" style="animation-delay:0.5s"/>
+        <!-- Pentagone intérieur -->
+        <polygon points="150,95 196,143 179,195 121,195 104,143"
+          stroke="rgba(212,168,67,0.6)" stroke-width="1.2" fill="rgba(212,168,67,0.04)"/>
+        <!-- Points sommets -->
+        <circle cx="150" cy="40" r="4" fill="#d4a843" class="glow-el"/>
+        <circle cx="253" cy="113" r="4" fill="#d4a843" class="glow-el" style="animation-delay:0.6s"/>
+        <circle cx="214" cy="233" r="4" fill="#d4a843" class="glow-el" style="animation-delay:1.2s"/>
+        <circle cx="86" cy="233" r="4" fill="#d4a843" class="glow-el" style="animation-delay:1.8s"/>
+        <circle cx="47" cy="113" r="4" fill="#d4a843" class="glow-el" style="animation-delay:2.4s"/>
+        <!-- Centre -->
+        <circle cx="150" cy="150" r="3" fill="rgba(212,168,67,0.5)"/>
+        <!-- Label φ -->
+        <text x="150" y="158" fill="rgba(212,168,67,0.7)" font-size="14" text-anchor="middle" font-family="Cinzel,serif">φ</text>
+        <!-- Rapport doré sur une diagonale -->
+        <line x1="150" y1="40" x2="214" y2="233" stroke="transparent" stroke-width="0"/>
+        <circle cx="186" cy="164" r="3" fill="#d4a843" class="glow-el" style="animation-delay:0.3s"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- VI–IX : Triangle et pentagone dans le cercle -->
+  <div class="solid-card" id="s2" style="--accent-col:#40a0e0; --glow-rgb:64,160,224">
+    <div class="card-3d">
+      <svg viewBox="0 0 300 300" fill="none" class="solid-svg">
+        <!-- Cercle -->
+        <circle cx="150" cy="150" r="115" stroke="rgba(64,160,224,0.2)" stroke-width="1" fill="none"/>
+        <!-- Triangle équilatéral inscrit -->
+        <polygon points="150,35 260,185 40,185"
+          stroke="#40a0e0" stroke-width="2" fill="rgba(64,160,224,0.06)" class="edge"/>
+        <!-- Pentagone inscrit (même cercle) -->
+        <polygon points="150,35 253,108 214,228 86,228 47,108"
+          stroke="rgba(212,168,67,0.7)" stroke-width="1.5" fill="rgba(212,168,67,0.04)" class="edge" style="animation-delay:0.5s"/>
+        <!-- Hexagone inscrit (pointillés) -->
+        <polygon points="150,35 265,113 265,188 150,265 35,188 35,113"
+          stroke="rgba(143,176,208,0.3)" stroke-width="1" fill="none" stroke-dasharray="4 3"/>
+        <!-- Rayon -->
+        <line x1="150" y1="150" x2="150" y2="35" stroke="rgba(64,160,224,0.4)" stroke-width="1" stroke-dasharray="3 3"/>
+        <!-- Centre -->
+        <circle cx="150" cy="150" r="4" fill="#40a0e0"/>
+        <!-- Labels -->
+        <text x="150" y="22" fill="#40a0e0" font-size="10" text-anchor="middle" font-family="Space Mono,monospace">triangle</text>
+        <text x="260" y="103" fill="rgba(212,168,67,0.8)" font-size="9" font-family="Space Mono,monospace">pentagone</text>
+        <text x="270" y="186" fill="rgba(143,176,208,0.5)" font-size="8" font-family="Space Mono,monospace">hexagone</text>
+        <!-- Côté = rayon (hexagone) -->
+        <line x1="150" y1="35" x2="35" y2="113" stroke="rgba(143,176,208,0.4)" stroke-width="1"/>
+        <text x="68" y="68" fill="rgba(143,176,208,0.5)" font-size="8" font-family="Space Mono,monospace" transform="rotate(-30 68 68)">r = côté</text>
+      </svg>
+    </div>
+    <div class="card-info">
+      <div class="prop-badge">
+        <span class="prop-id">Prop. VI–IX</span>
+        <span class="prop-type">Construction</span>
+      </div>
+      <h2>Triangle &amp; Pentagone dans le Cercle</h2>
+      <p>Ces propositions construisent au compas et à la règle le <strong>triangle équilatéral</strong>, le <strong>carré</strong>, le <strong>pentagone</strong> et l'<strong>hexagone</strong> réguliers inscrits dans un cercle donné.</p>
+      <p>Prop. VI : construire le côté du pentagone inscrit à partir du rayon et du nombre d'or. Prop. IX : le côté du <strong>décagone</strong> inscrit vaut r/φ. La relation clé : si un hexagone et un décagone sont inscrits dans le même cercle, le côté du pentagone vaut √(côté_hex² + côté_déc²).</p>
+      <p>Ces constructions sont les briques de base des solides platoniciens — le pentagone servira pour le dodécaèdre, le triangle équilatéral pour le tétraèdre, l'octaèdre et l'icosaèdre.</p>
+      <div class="stats">
+        <div class="stat"><div class="stat-val">3</div><div class="stat-label">Triangle</div></div>
+        <div class="stat"><div class="stat-val">5</div><div class="stat-label">Pentagone</div></div>
+        <div class="stat"><div class="stat-val">6</div><div class="stat-label">Hexagone</div></div>
+      </div>
+      <div class="formula">Côté pentagone = √(r² + (r/φ)²)
+Côté triangle = r√3
+Côté hexagone = r  (= rayon!)</div>
+    </div>
+  </div>
+
+  <!-- X–XII : Tétraèdre et octaèdre -->
+  <div class="solid-card" id="s3" style="--accent-col:#3db88a; --glow-rgb:61,184,138">
+    <div class="card-info">
+      <div class="prop-badge">
+        <span class="prop-id">Prop. X–XII</span>
+        <span class="prop-type">Feu &amp; Air</span>
+      </div>
+      <h2>Tétraèdre &amp; Octaèdre</h2>
+      <p>Le <strong>tétraèdre</strong> (4 faces triangulaires équilatérales, symbole du Feu chez Platon) est inscrit dans la sphère : Euclide détermine le rapport entre l'arête et le diamètre de la sphère circumscrite.</p>
+      <p>Prop. XII : l'<strong>octaèdre</strong> (8 faces triangulaires, symbole de l'Air) est construit en joignant les milieux des arêtes d'un cube, ou en plaçant deux pyramides carrées base à base. Son arête est en rapport √2 avec le diamètre.</p>
+      <p>Pour les deux : Euclide prouve que le diamètre de la sphère se divise en un rapport rationnel lié à la géométrie du solide — validation géométrique que chaque solide s'inscrit <strong>parfaitement</strong> dans une sphère.</p>
+      <div class="stats">
+        <div class="stat"><div class="stat-val">4</div><div class="stat-label">Faces tétra.</div></div>
+        <div class="stat"><div class="stat-val">8</div><div class="stat-label">Faces octa.</div></div>
+        <div class="stat"><div class="stat-val">6</div><div class="stat-label">Arêtes tétra.</div></div>
+      </div>
+      <div class="formula">Tétraèdre : a/D = √(2/3)  (a=arête, D=diam.)
+Octaèdre  : a/D = 1/√2
+V_tétra = a³/(6√2)
+V_octa  = a³√2/3</div>
+    </div>
+    <div class="card-3d">
+      <svg viewBox="0 0 300 300" fill="none" class="solid-svg">
+        <!-- TÉTRAÈDRE (projection) -->
+        <!-- Sphère circumscrite (légère) -->
+        <circle cx="100" cy="150" r="80" stroke="rgba(61,184,138,0.1)" stroke-width="1" fill="none"/>
+        <!-- Faces visibles -->
+        <polygon points="100,70 45,205 155,205" stroke="#3db88a" stroke-width="1.8" fill="rgba(61,184,138,0.08)" class="edge"/>
+        <!-- Arête arrière (pointillé) -->
+        <line x1="100" y1="70" x2="100" y2="205" stroke="rgba(61,184,138,0.3)" stroke-width="1" stroke-dasharray="4 3"/>
+        <!-- Sommet bas -->
+        <line x1="100" y1="70" x2="45" y2="205" stroke="#3db88a" stroke-width="1.5"/>
+        <line x1="100" y1="70" x2="155" y2="205" stroke="#3db88a" stroke-width="1.5"/>
+        <line x1="45" y1="205" x2="155" y2="205" stroke="#3db88a" stroke-width="1.5"/>
+        <!-- Sommets -->
+        <circle cx="100" cy="70" r="4" fill="#3db88a" class="glow-el"/>
+        <circle cx="45" cy="205" r="4" fill="#3db88a" class="glow-el" style="animation-delay:1s"/>
+        <circle cx="155" cy="205" r="4" fill="#3db88a" class="glow-el" style="animation-delay:2s"/>
+        <circle cx="100" cy="205" r="3" fill="rgba(61,184,138,0.5)"/>
+        <text x="100" y="56" fill="#3db88a" font-size="11" text-anchor="middle" font-family="Cinzel,serif">Tétraèdre</text>
+
+        <!-- OCTAÈDRE (projection à droite) -->
+        <circle cx="210" cy="150" r="65" stroke="rgba(61,184,138,0.08)" stroke-width="1" fill="none"/>
+        <!-- Octaèdre schématique -->
+        <polygon points="210,85 260,150 210,215 160,150" stroke="rgba(61,184,138,0.7)" stroke-width="1.5" fill="rgba(61,184,138,0.05)" class="edge" style="animation-delay:0.4s"/>
+        <!-- Axe horizontal (pointillé) -->
+        <line x1="145" y1="150" x2="275" y2="150" stroke="rgba(61,184,138,0.25)" stroke-width="1" stroke-dasharray="3 3"/>
+        <!-- Points -->
+        <circle cx="210" cy="85" r="4" fill="rgba(61,184,138,0.9)" class="glow-el" style="animation-delay:0.5s"/>
+        <circle cx="260" cy="150" r="3" fill="rgba(61,184,138,0.7)"/>
+        <circle cx="210" cy="215" r="4" fill="rgba(61,184,138,0.9)" class="glow-el" style="animation-delay:1.5s"/>
+        <circle cx="160" cy="150" r="3" fill="rgba(61,184,138,0.7)"/>
+        <text x="210" y="235" fill="rgba(61,184,138,0.6)" font-size="9" text-anchor="middle" font-family="Cinzel,serif">Octaèdre</text>
+        <!-- Ligne séparatrice -->
+        <line x1="183" y1="80" x2="183" y2="230" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- XIII–XV : Cube (hexaèdre) -->
+  <div class="solid-card" id="s4" style="--accent-col:#8fb0d0; --glow-rgb:143,176,208">
+    <div class="card-3d">
+      <svg viewBox="0 0 300 300" fill="none" class="solid-svg">
+        <!-- Sphère circumscrite -->
+        <circle cx="150" cy="150" r="115" stroke="rgba(143,176,208,0.08)" stroke-width="1" fill="none"/>
+        <!-- CUBE isométrique -->
+        <!-- Face avant -->
+        <polygon points="80,100 220,100 220,220 80,220"
+          stroke="#8fb0d0" stroke-width="1.8" fill="rgba(143,176,208,0.06)" class="edge"/>
+        <!-- Face droite -->
+        <polygon points="220,100 270,60 270,180 220,220"
+          stroke="#8fb0d0" stroke-width="1.5" fill="rgba(143,176,208,0.04)" class="edge" style="animation-delay:0.4s"/>
+        <!-- Face supérieure -->
+        <polygon points="80,100 130,60 270,60 220,100"
+          stroke="#8fb0d0" stroke-width="1.5" fill="rgba(143,176,208,0.08)" class="edge" style="animation-delay:0.7s"/>
+        <!-- Arêtes cachées (pointillé) -->
+        <line x1="80" y1="220" x2="130" y2="180" stroke="rgba(143,176,208,0.25)" stroke-width="1" stroke-dasharray="4 3"/>
+        <line x1="130" y1="60" x2="130" y2="180" stroke="rgba(143,176,208,0.25)" stroke-width="1" stroke-dasharray="4 3"/>
+        <line x1="130" y1="180" x2="270" y2="180" stroke="rgba(143,176,208,0.25)" stroke-width="1" stroke-dasharray="4 3"/>
+        <!-- Diagonale spatiale -->
+        <line x1="80" y1="100" x2="270" y2="180" stroke="rgba(212,168,67,0.5)" stroke-width="1.5" stroke-dasharray="5 3" class="glow-el"/>
+        <!-- Sommets -->
+        <circle cx="80" cy="100" r="4" fill="#8fb0d0" class="glow-el"/>
+        <circle cx="220" cy="100" r="4" fill="#8fb0d0" class="glow-el" style="animation-delay:0.4s"/>
+        <circle cx="270" cy="60" r="4" fill="#8fb0d0" class="glow-el" style="animation-delay:0.8s"/>
+        <circle cx="130" cy="60" r="4" fill="#8fb0d0" class="glow-el" style="animation-delay:1.2s"/>
+        <circle cx="80" cy="220" r="4" fill="#8fb0d0" class="glow-el" style="animation-delay:1.6s"/>
+        <circle cx="220" cy="220" r="4" fill="#8fb0d0" class="glow-el" style="animation-delay:2s"/>
+        <circle cx="270" cy="180" r="4" fill="#8fb0d0" class="glow-el" style="animation-delay:2.4s"/>
+        <!-- Annotation diagonale -->
+        <text x="210" y="130" fill="rgba(212,168,67,0.7)" font-size="9" font-family="Space Mono,monospace">d=a√3</text>
+        <!-- Label -->
+        <text x="150" y="278" fill="rgba(143,176,208,0.6)" font-size="12" text-anchor="middle" font-family="Cinzel,serif">Cube (Hexaèdre)</text>
+      </svg>
+    </div>
+    <div class="card-info">
+      <div class="prop-badge">
+        <span class="prop-id">Prop. XIII–XV</span>
+        <span class="prop-type">Terre</span>
+      </div>
+      <h2>Construction du Cube (Hexaèdre)</h2>
+      <p>Le <strong>cube</strong> (6 faces carrées, 12 arêtes, 8 sommets) est le solide platonicien symbolisant la <strong>Terre</strong>. Euclide l'inscrit dans une sphère et détermine la relation entre l'arête a et le rayon R de la sphère circumscrite.</p>
+      <p>Prop. XV : la <strong>diagonale spatiale</strong> du cube vaut a√3. Comme la sphère passe par les 8 sommets, son diamètre est la diagonale spatiale : D = a√3. La construction part d'un carré de base, élève les perpendiculaires et obtient le cube.</p>
+      <p>Le cube contient en lui les germes de tous les autres solides : l'octaèdre s'obtient en joignant les centres des faces, le tétraèdre en joignant 4 sommets alternés, et le dodécaèdre en ajoutant des "toits" pentagonaux.</p>
+      <div class="stats">
+        <div class="stat"><div class="stat-val">6</div><div class="stat-label">Faces</div></div>
+        <div class="stat"><div class="stat-val">12</div><div class="stat-label">Arêtes</div></div>
+        <div class="stat"><div class="stat-val">8</div><div class="stat-label">Sommets</div></div>
+      </div>
+      <div class="formula">Diagonale spatiale : d = a√3
+Rayon sphère : R = a√3/2
+Volume : V = a³
+Euler : S − A + F = 8 − 12 + 6 = 2</div>
+    </div>
+  </div>
+
+  <!-- XVI–XVII : Dodécaèdre -->
+  <div class="solid-card" id="s5" style="--accent-col:#d05080; --glow-rgb:208,80,128">
+    <div class="card-info">
+      <div class="prop-badge">
+        <span class="prop-id">Prop. XVI–XVII</span>
+        <span class="prop-type">Cosmos</span>
+      </div>
+      <h2>Construction du Dodécaèdre</h2>
+      <p>Le <strong>dodécaèdre</strong> (12 faces pentagonales régulières) est le solide le plus difficile à construire. Platon l'associait au <strong>Cosmos entier</strong> — le cinquième élément, l'éther. Euclide le construit en partant d'un cube.</p>
+      <p>Construction : on ajoute des "toits" pentagonaux sur les 6 faces du cube. Chaque toit est un pentagone dont les côtés font appel au <strong>nombre d'or</strong> φ. L'arête du dodécaèdre inscrit dans la même sphère que le cube vaut a/φ, où a est l'arête du cube.</p>
+      <p>Prop. XVII : si le dodécaèdre et le cube sont inscrits dans la même sphère, le cube contient le dodécaèdre, et l'arête du dodécaèdre est irrationnelle (un <strong>apotome</strong>). C'est l'application directe du livre X au solide cosmique.</p>
+      <div class="stats">
+        <div class="stat"><div class="stat-val">12</div><div class="stat-label">Faces</div></div>
+        <div class="stat"><div class="stat-val">30</div><div class="stat-label">Arêtes</div></div>
+        <div class="stat"><div class="stat-val">20</div><div class="stat-label">Sommets</div></div>
+      </div>
+      <div class="formula">Arête : a_dodéca = a_cube / φ  (apotome!)
+Rayon : R = a√3 · φ/2
+Volume : V = (a³/4)(15+7√5)
+Euler : 20 − 30 + 12 = 2 ✓</div>
+    </div>
+    <div class="card-3d">
+      <svg viewBox="0 0 300 300" fill="none" class="solid-svg">
+        <!-- Sphère -->
+        <circle cx="150" cy="150" r="120" stroke="rgba(208,80,128,0.07)" stroke-width="1" fill="none"/>
+        <!-- Dodécaèdre : projection Schlegel approximée -->
+        <!-- Face centrale (pentagone extérieur) -->
+        <polygon points="150,30 243,95 210,205 90,205 57,95"
+          stroke="#d05080" stroke-width="2" fill="rgba(208,80,128,0.05)" class="edge"/>
+        <!-- Pentagone intérieur -->
+        <polygon points="150,82 196,117 178,166 122,166 104,117"
+          stroke="#d05080" stroke-width="1.5" fill="rgba(208,80,128,0.08)" class="edge" style="animation-delay:0.4s"/>
+        <!-- Connexions entre les deux pentagones -->
+        <line x1="150" y1="30" x2="150" y2="82" stroke="rgba(208,80,128,0.5)" stroke-width="1.2"/>
+        <line x1="243" y1="95" x2="196" y2="117" stroke="rgba(208,80,128,0.5)" stroke-width="1.2"/>
+        <line x1="210" y1="205" x2="178" y2="166" stroke="rgba(208,80,128,0.5)" stroke-width="1.2"/>
+        <line x1="90" y1="205" x2="122" y2="166" stroke="rgba(208,80,128,0.5)" stroke-width="1.2"/>
+        <line x1="57" y1="95" x2="104" y2="117" stroke="rgba(208,80,128,0.5)" stroke-width="1.2"/>
+        <!-- Arêtes supplémentaires des faces latérales -->
+        <line x1="243" y1="95" x2="270" y2="145" stroke="rgba(208,80,128,0.3)" stroke-width="1"/>
+        <line x1="270" y1="145" x2="250" y2="205" stroke="rgba(208,80,128,0.3)" stroke-width="1"/>
+        <line x1="250" y1="205" x2="210" y2="205" stroke="rgba(208,80,128,0.3)" stroke-width="1"/>
+        <line x1="57" y1="95" x2="30" y2="145" stroke="rgba(208,80,128,0.3)" stroke-width="1"/>
+        <line x1="30" y1="145" x2="50" y2="205" stroke="rgba(208,80,128,0.3)" stroke-width="1"/>
+        <line x1="50" y1="205" x2="90" y2="205" stroke="rgba(208,80,128,0.3)" stroke-width="1"/>
+        <!-- Sommets -->
+        <circle cx="150" cy="30" r="4" fill="#d05080" class="glow-el"/>
+        <circle cx="243" cy="95" r="4" fill="#d05080" class="glow-el" style="animation-delay:0.6s"/>
+        <circle cx="210" cy="205" r="4" fill="#d05080" class="glow-el" style="animation-delay:1.2s"/>
+        <circle cx="90" cy="205" r="4" fill="#d05080" class="glow-el" style="animation-delay:1.8s"/>
+        <circle cx="57" cy="95" r="4" fill="#d05080" class="glow-el" style="animation-delay:2.4s"/>
+        <!-- φ annotation -->
+        <text x="150" y="270" fill="rgba(208,80,128,0.6)" font-size="11" text-anchor="middle" font-family="Cinzel,serif">Dodécaèdre</text>
+        <text x="150" y="288" fill="rgba(212,168,67,0.5)" font-size="9" text-anchor="middle" font-family="Space Mono,monospace">arête = φ-apotome</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- XVIII : Icosaèdre -->
+  <div class="solid-card" id="s6" style="--accent-col:#8060d0; --glow-rgb:128,96,208">
+    <div class="card-3d">
+      <svg viewBox="0 0 300 300" fill="none" class="solid-svg">
+        <!-- Sphère -->
+        <circle cx="150" cy="150" r="120" stroke="rgba(128,96,208,0.08)" stroke-width="1" fill="none"/>
+        <!-- Icosaèdre : projection aplatie -->
+        <!-- Sommet supérieur -->
+        <circle cx="150" cy="30" r="5" fill="#8060d0" class="glow-el"/>
+        <!-- Couronne haute (5 sommets) -->
+        <circle cx="233" cy="90" r="4" fill="#8060d0" class="glow-el" style="animation-delay:0.4s"/>
+        <circle cx="210" cy="175" r="4" fill="#8060d0" class="glow-el" style="animation-delay:0.8s"/>
+        <circle cx="90" cy="175" r="4" fill="#8060d0" class="glow-el" style="animation-delay:1.2s"/>
+        <circle cx="67" cy="90" r="4" fill="#8060d0" class="glow-el" style="animation-delay:1.6s"/>
+        <circle cx="197" cy="50" r="3" fill="rgba(128,96,208,0.7)"/>
+        <circle cx="103" cy="50" r="3" fill="rgba(128,96,208,0.7)"/>
+        <!-- Couronne basse (5 sommets) -->
+        <circle cx="150" cy="270" r="5" fill="#8060d0" class="glow-el" style="animation-delay:2.5s"/>
+        <circle cx="255" cy="190" r="3" fill="rgba(128,96,208,0.7)"/>
+        <circle cx="45" cy="190" r="3" fill="rgba(128,96,208,0.7)"/>
+        <!-- Arêtes -->
+        <!-- Depuis sommet haut -->
+        <line x1="150" y1="30" x2="197" y2="50" stroke="rgba(128,96,208,0.6)" stroke-width="1.2" class="edge"/>
+        <line x1="150" y1="30" x2="103" y2="50" stroke="rgba(128,96,208,0.6)" stroke-width="1.2" class="edge" style="animation-delay:0.2s"/>
+        <line x1="150" y1="30" x2="233" y2="90" stroke="rgba(128,96,208,0.5)" stroke-width="1.2" class="edge" style="animation-delay:0.3s"/>
+        <line x1="150" y1="30" x2="67" y2="90" stroke="rgba(128,96,208,0.5)" stroke-width="1.2" class="edge" style="animation-delay:0.4s"/>
+        <!-- Anneau supérieur -->
+        <polygon points="197,50 233,90 210,175 90,175 67,90 103,50"
+          stroke="#8060d0" stroke-width="1.5" fill="rgba(128,96,208,0.06)" class="edge" style="animation-delay:0.5s"/>
+        <!-- Diagonales internes -->
+        <line x1="197" y1="50" x2="210" y2="175" stroke="rgba(128,96,208,0.3)" stroke-width="1"/>
+        <line x1="103" y1="50" x2="90" y2="175" stroke="rgba(128,96,208,0.3)" stroke-width="1"/>
+        <!-- Vers bas -->
+        <line x1="233" y1="90" x2="255" y2="190" stroke="rgba(128,96,208,0.4)" stroke-width="1"/>
+        <line x1="210" y1="175" x2="255" y2="190" stroke="rgba(128,96,208,0.4)" stroke-width="1"/>
+        <line x1="210" y1="175" x2="150" y2="270" stroke="rgba(128,96,208,0.4)" stroke-width="1"/>
+        <line x1="90" y1="175" x2="45" y2="190" stroke="rgba(128,96,208,0.4)" stroke-width="1"/>
+        <line x1="90" y1="175" x2="150" y2="270" stroke="rgba(128,96,208,0.4)" stroke-width="1"/>
+        <line x1="255" y1="190" x2="150" y2="270" stroke="rgba(128,96,208,0.4)" stroke-width="1"/>
+        <line x1="45" y1="190" x2="150" y2="270" stroke="rgba(128,96,208,0.4)" stroke-width="1"/>
+        <line x1="67" y1="90" x2="45" y2="190" stroke="rgba(128,96,208,0.4)" stroke-width="1"/>
+        <!-- Golden rectangles hint -->
+        <rect x="118" y="48" width="64" height="39" stroke="rgba(212,168,67,0.2)" stroke-width="0.8" fill="none" stroke-dasharray="3 3"/>
+        <!-- Label -->
+        <text x="150" y="295" fill="rgba(128,96,208,0.6)" font-size="11" text-anchor="middle" font-family="Cinzel,serif">Icosaèdre</text>
+      </svg>
+    </div>
+    <div class="card-info">
+      <div class="prop-badge">
+        <span class="prop-id">Prop. XVIII</span>
+        <span class="prop-type">Eau — Couronnement</span>
+      </div>
+      <h2>Construction de l'Icosaèdre</h2>
+      <p>L'<strong>icosaèdre</strong> (20 faces triangulaires, 30 arêtes, 12 sommets) est le plus complexe des solides platoniciens. Il symbolise l'<strong>Eau</strong>. C'est la dernière proposition des Éléments — le couronnement de toute l'œuvre.</p>
+      <p>Construction : on place deux couronnes de 5 sommets décalées de 36°, plus un sommet en haut et un en bas. La clé : les 12 sommets se trouvent aux coins de <strong>trois rectangles dorés</strong> orthogonaux de dimensions 1 × φ. C'est ainsi que φ gouverne l'icosaèdre.</p>
+      <p>Euclide prouve que l'arête de l'icosaèdre inscrit dans la même sphère que le cube est aussi une grandeur irrationnelle — un <strong>mineur</strong> (type du livre X). Il conclut en montrant que les cinq solides sont les <strong>seuls polyèdres réguliers convexes possibles</strong>.</p>
+      <div class="stats">
+        <div class="stat"><div class="stat-val">20</div><div class="stat-label">Faces</div></div>
+        <div class="stat"><div class="stat-val">30</div><div class="stat-label">Arêtes</div></div>
+        <div class="stat"><div class="stat-val">12</div><div class="stat-label">Sommets</div></div>
+      </div>
+      <div class="formula">Arête : a/R = 2/√(1+φ²)  (R = rayon sphère)
+Sommets : 3 rectangles d'or 1×φ imbriqués
+Volume : V = 5φ²a³/6
+Euler : 12 − 30 + 20 = 2 ✓</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span class="phi">△ □ ○ ⬠ ❄</span>
+  Les Cinq Solides de Platon · Euclide Livre XIII · Tétraèdre · Cube · Octaèdre · Dodécaèdre · Icosaèdre
+</footer>
+
+<script>
+  const cards = document.querySelectorAll('.solid-card');
+  const io = new IntersectionObserver(es => {
+    es.forEach(e => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), 80);
+        io.unobserve(e.target);
+      }
+    });
+  }, {threshold:0.08});
+  cards.forEach(c => io.observe(c));
+</script>
+</body>
+</html>
