@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aires & Volumes — Mesure des Figures</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf7f2;
+    --surface: #ffffff;
+    --ink: #1a1208;
+    --warm: #8b6914;
+    --terracotta: #c45c2e;
+    --sage: #4a7c59;
+    --dust: #e8dfc8;
+    --muted: #9a8b72;
+    --border: #ddd4c0;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+  }
+
+  /* Texture grain overlay */
+  body::after {
+    content:'';
+    position:fixed;
+    inset:0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events:none;
+    z-index:9999;
+    opacity:0.4;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 80px 40px 65px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content:'';
+    position:absolute;
+    inset:0;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 40px,
+      rgba(255,255,255,0.015) 40px,
+      rgba(255,255,255,0.015) 41px
+    );
+  }
+  /* Decorative circle in header */
+  header::after {
+    content:'';
+    position:absolute;
+    width: 500px; height:500px;
+    border-radius:50%;
+    border: 1px solid rgba(255,255,255,0.05);
+    top:-200px; right:-100px;
+  }
+  .era-tag {
+    display:inline-block;
+    border:1px solid rgba(139,105,20,0.8);
+    color: #d4a84b;
+    font-size:10px;
+    letter-spacing:5px;
+    text-transform:uppercase;
+    padding: 5px 18px;
+    margin-bottom:28px;
+    font-weight:400;
+  }
+  header h1 {
+    font-family:'EB Garamond', serif;
+    font-size: clamp(2.6rem, 6vw, 5rem);
+    font-weight:400;
+    line-height:1.1;
+    margin-bottom:18px;
+  }
+  header h1 em { color:#d4a84b; font-style:italic; }
+  header p {
+    font-size:0.95rem;
+    color:rgba(250,247,242,0.6);
+    max-width:520px;
+    margin:0 auto;
+    line-height:1.8;
+  }
+
+  /* Decorative SVG solids in header corners */
+  .deco {
+    position:absolute;
+    opacity:0.07;
+    pointer-events:none;
+  }
+  .deco-1 { bottom:10px; left:30px; width:160px; }
+  .deco-2 { top:15px; right:30px; width:120px; }
+
+  /* NAV */
+  nav {
+    position:sticky;
+    top:0; z-index:100;
+    background:var(--ink);
+    padding:12px 30px;
+    display:flex;
+    gap:4px;
+    flex-wrap:wrap;
+    justify-content:center;
+    border-bottom:2px solid var(--warm);
+  }
+  nav a {
+    color:rgba(250,247,242,0.5);
+    text-decoration:none;
+    font-size:11px;
+    letter-spacing:1px;
+    padding:5px 12px;
+    border-radius:3px;
+    transition:all 0.2s;
+    font-weight:400;
+  }
+  nav a:hover { color:#d4a84b; background:rgba(212,168,75,0.1); }
+
+  /* TIMELINE LINE */
+  main {
+    max-width:1080px;
+    margin:0 auto;
+    padding:70px 24px 80px;
+    position:relative;
+  }
+  main::before {
+    content:'';
+    position:absolute;
+    left:50%;
+    top:70px; bottom:80px;
+    width:1px;
+    background: linear-gradient(to bottom, transparent, var(--border) 10%, var(--border) 90%, transparent);
+    transform:translateX(-50%);
+  }
+
+  /* CARD */
+  .entry {
+    display:grid;
+    grid-template-columns: 1fr 60px 1fr;
+    gap:0;
+    margin-bottom:56px;
+    align-items:start;
+    opacity:0;
+    transform:translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .entry.visible { opacity:1; transform:translateY(0); }
+
+  /* Alternating: odd = text left, visual right; even = visual left, text right */
+  .entry:nth-child(odd) .card-text { order:1; }
+  .entry:nth-child(odd) .timeline-node { order:2; }
+  .entry:nth-child(odd) .card-visual { order:3; }
+
+  .entry:nth-child(even) .card-visual { order:1; }
+  .entry:nth-child(even) .timeline-node { order:2; }
+  .entry:nth-child(even) .card-text { order:3; }
+
+  /* Timeline node */
+  .timeline-node {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-top:30px;
+  }
+  .node-dot {
+    width:14px; height:14px;
+    border-radius:50%;
+    background: var(--warm);
+    border:3px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--warm);
+    flex-shrink:0;
+    transition: transform 0.3s;
+  }
+  .entry:hover .node-dot { transform:scale(1.4); }
+
+  /* TEXT BOX */
+  .card-text {
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:4px;
+    padding:34px 36px;
+    box-shadow: 0 2px 20px rgba(26,18,8,0.05);
+    transition: box-shadow 0.3s;
+  }
+  .entry:hover .card-text { box-shadow: 0 6px 36px rgba(26,18,8,0.1); }
+
+  .prop-tag {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:14px;
+  }
+  .prop-num {
+    font-family:'EB Garamond', serif;
+    font-size:12px;
+    background:var(--ink);
+    color:#d4a84b;
+    padding:3px 10px;
+    letter-spacing:1px;
+  }
+  .prop-cat {
+    font-size:10px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    color:var(--terracotta);
+    font-weight:400;
+  }
+  .card-text h2 {
+    font-family:'EB Garamond', serif;
+    font-size:1.5rem;
+    font-weight:400;
+    color:var(--ink);
+    margin-bottom:14px;
+    line-height:1.3;
+  }
+  .card-text p {
+    font-size:0.88rem;
+    line-height:1.85;
+    color:#5a4f3e;
+    margin-bottom:8px;
+  }
+  .card-text p strong { color:var(--ink); font-weight:500; }
+  .formula {
+    margin-top:12px;
+    background:var(--dust);
+    border-left:3px solid var(--warm);
+    padding:9px 14px;
+    font-family:'EB Garamond', serif;
+    font-size:1rem;
+    color:var(--warm);
+    border-radius:0 3px 3px 0;
+    font-style:italic;
+  }
+
+  /* VISUAL BOX */
+  .card-visual {
+    background: var(--ink);
+    border-radius:4px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px;
+    min-height:240px;
+    box-shadow: 0 2px 20px rgba(26,18,8,0.1);
+  }
+  .card-visual svg {
+    width:100%;
+    max-width:240px;
+    height:auto;
+  }
+
+  /* Animations */
+  @keyframes draw { from{stroke-dashoffset:800} to{stroke-dashoffset:0} }
+  @keyframes pop { from{opacity:0;transform:scale(0.6)} to{opacity:1;transform:scale(1)} }
+  @keyframes spin { from{transform-origin:140px 120px;transform:rotate(0deg)} to{transform-origin:140px 120px;transform:rotate(360deg)} }
+  @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+  .draw { stroke-dasharray:800; animation:draw 2.5s ease forwards; }
+  .pop { animation:pop 0.5s ease 1s both; }
+  .pulse { animation:pulse 3s ease-in-out infinite; }
+
+  /* FOOTER */
+  footer {
+    background:var(--ink);
+    color:rgba(250,247,242,0.3);
+    text-align:center;
+    padding:40px;
+    font-size:11px;
+    letter-spacing:3px;
+    text-transform:uppercase;
+    border-top:2px solid var(--warm);
+  }
+
+  @media(max-width:720px){
+    main::before { display:none; }
+    .entry, .entry:nth-child(even) {
+      grid-template-columns:1fr;
+    }
+    .entry .card-text, .entry .card-visual,
+    .entry:nth-child(even) .card-text, .entry:nth-child(even) .card-visual { order:0; }
+    .timeline-node { display:none; }
+    .card-visual { min-height:220px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <!-- Decorative solids -->
+  <svg class="deco deco-1" viewBox="0 0 200 200" fill="none">
+    <polygon points="100,10 180,60 180,140 100,190 20,140 20,60" stroke="white" stroke-width="1.5"/>
+    <line x1="100" y1="10" x2="100" y2="190" stroke="white" stroke-width="0.5"/>
+    <line x1="20" y1="60" x2="180" y2="140" stroke="white" stroke-width="0.5"/>
+  </svg>
+  <svg class="deco deco-2" viewBox="0 0 160 160" fill="none">
+    <circle cx="80" cy="80" r="70" stroke="white" stroke-width="1.5"/>
+    <ellipse cx="80" cy="80" rx="70" ry="20" stroke="white" stroke-width="0.8"/>
+    <line x1="80" y1="10" x2="80" y2="150" stroke="white" stroke-width="0.5"/>
+  </svg>
+
+  <div class="era-tag">Mesure des Figures</div>
+  <h1>Aires, Volumes<br>&amp; <em>Exhaustion</em></h1>
+  <p>De la méthode d'exhaustion d'Archimède aux volumes des solides de révolution — les propositions fondamentales de la mesure géométrique.</p>
+</header>
+
+<nav>
+  <a href="#s1">Lem. I — Exhaustion</a>
+  <a href="#s2">I — Polygones</a>
+  <a href="#s3">II — Cercles</a>
+  <a href="#s4">III–IV — Approximation</a>
+  <a href="#s5">V–VI — Pyramides</a>
+  <a href="#s6">VII–IX — Volumes ∝ bases</a>
+  <a href="#s7">X–XII — Cône/Cylindre</a>
+  <a href="#s8">XIII–XV — Similitude</a>
+  <a href="#s9">XVI–XVII — Sphère</a>
+</nav>
+
+<main>
+
+  <!-- Lemme I -->
+  <div class="entry" id="s1">
+    <div class="card-text">
+      <div class="prop-tag">
+        <span class="prop-num">Lemme I</span>
+        <span class="prop-cat">Fondement</span>
+      </div>
+      <h2>Lemme d'Exhaustion — Réduction par Moitiés</h2>
+      <p>Si d'une grandeur on retranche une partie <strong>au moins égale à sa moitié</strong>, puis du reste encore au moins la moitié, et ainsi de suite, il restera finalement une grandeur <strong>inférieure à toute grandeur donnée</strong> aussi petite soit-elle.</p>
+      <p>C'est le cœur de la <strong>méthode d'exhaustion</strong> : on peut approcher une figure par des polygones inscrits de plus en plus fins jusqu'à en "épuiser" l'aire. Ancêtre du calcul intégral.</p>
+      <div class="formula">∀ε &gt; 0, ∃n : aₙ &lt; ε (suite décroissante par moitiés)</div>
+    </div>
+    <div class="timeline-node"><div class="node-dot"></div></div>
+    <div class="card-visual">
+      <svg viewBox="0 0 260 220" fill="none">
+        <!-- Carré de départ -->
+        <rect x="30" y="20" width="200" height="180" stroke="rgba(212,168,75,0.4)" stroke-width="1" fill="rgba(212,168,75,0.04)"/>
+        <!-- Moitié 1 -->
+        <rect x="30" y="20" width="100" height="90" stroke="#d4a84b" stroke-width="1.5" fill="rgba(212,168,75,0.12)" class="draw"/>
+        <!-- Moitié de la moitié -->
+        <rect x="130" y="20" width="50" height="45" stroke="#c45c2e" stroke-width="1.5" fill="rgba(196,92,46,0.12)" class="draw"/>
+        <!-- Et ainsi de suite -->
+        <rect x="180" y="20" width="25" height="22" stroke="#4a7c59" stroke-width="1.2" fill="rgba(74,124,89,0.15)" class="draw"/>
+        <rect x="205" y="20" width="13" height="11" stroke="rgba(255,255,255,0.4)" stroke-width="1" fill="rgba(255,255,255,0.06)" class="draw"/>
+        <!-- Labels -->
+        <text x="65" y="70" fill="#d4a84b" font-size="14" font-family="EB Garamond,serif" text-anchor="middle">½</text>
+        <text x="155" y="47" fill="#c45c2e" font-size="11" font-family="EB Garamond,serif" text-anchor="middle">¼</text>
+        <text x="192" y="33" fill="#4a7c59" font-size="9" font-family="EB Garamond,serif">⅛</text>
+        <!-- Flèche convergence -->
+        <text x="30" y="215" fill="rgba(212,168,75,0.7)" font-size="9" font-family="Jost,sans-serif">½ + ¼ + ⅛ + … → 1 (exhaustion)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Prop I -->
+  <div class="entry" id="s2">
+    <div class="card-text">
+      <div class="prop-tag">
+        <span class="prop-num">Prop. I</span>
+        <span class="prop-cat">Polygones semblables</span>
+      </div>
+      <h2>Aires des Polygones ∝ Carrés des Diamètres</h2>
+      <p>Deux polygones semblables inscrits dans des cercles ont leurs <strong>aires proportionnelles aux carrés des diamètres</strong> (ou des rayons) de leurs cercles respectifs. Le rapport des aires est le carré du rapport de similitude.</p>
+      <p>Exemple : si le diamètre double, l'aire est <strong>multipliée par 4</strong>. Si le diamètre triple, l'aire est multipliée par 9.</p>
+      <div class="formula">A₁/A₂ = d₁²/d₂² = k² (k = rapport de similitude)</div>
+    </div>
+    <div class="timeline-node"><div class="node-dot"></div></div>
+    <div class="card-visual">
+      <svg viewBox="0 0 260 220" fill="none">
+        <!-- Petit hexagone inscrit -->
+        <circle cx="80" cy="110" r="55" stroke="rgba(212,168,75,0.3)" stroke-width="1" fill="none"/>
+        <polygon points="80,55 128,82 128,138 80,165 32,138 32,82" stroke="#d4a84b" stroke-width="1.5" fill="rgba(212,168,75,0.08)" class="draw"/>
+        <!-- Grand hexagone inscrit -->
+        <circle cx="185" cy="110" r="65" stroke="rgba(196,92,46,0.3)" stroke-width="1" fill="none"/>
+        <polygon points="185,45 241,77 241,143 185,175 129,143 129,77" stroke="#c45c2e" stroke-width="1.5" fill="rgba(196,92,46,0.08)" class="draw"/>
+        <!-- Diamètres -->
+        <line x1="25" y1="110" x2="135" y2="110" stroke="rgba(212,168,75,0.5)" stroke-width="1" stroke-dasharray="3 3"/>
+        <line x1="120" y1="110" x2="250" y2="110" stroke="rgba(196,92,46,0.5)" stroke-width="1" stroke-dasharray="3 3"/>
+        <!-- Labels -->
+        <text x="65" y="107" fill="#d4a84b" font-size="10">d₁</text>
+        <text x="168" y="107" fill="#c45c2e" font-size="10">d₂</text>
+        <text x="55" y="200" fill="rgba(212,168,75,0.7)" font-size="9">A₁</text>
+        <text x="175" y="200" fill="rgba(196,92,46,0.7)" font-size="9">A₂ = A₁ · (d₂/d₁)²</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Prop II -->
+  <div class="entry" id="s3">
+    <div class="card-text">
+      <div class="prop-tag">
+        <span class="prop-num">Prop. II</span>
+        <span class="prop-cat">Cercles</span>
+      </div>
+      <h2>Aires des Cercles ∝ Carrés des Diamètres</h2>
+      <p>Les aires de deux cercles quelconques sont entre elles comme les <strong>carrés de leurs diamètres</strong> (ou de leurs rayons). C'est la généralisation de la Prop. I aux figures courbes, démontrée par exhaustion.</p>
+      <p>On prouve par l'absurde : si le rapport n'était pas k², on pourrait inscrire un polygone qui contredit le Lemme I. Donc <strong>A = π·r²</strong> est cohérent avec ce rapport.</p>
+      <div class="formula">A_cercle = π · r²  →  A₁/A₂ = r₁²/r₂²</div>
+    </div>
+    <div class="timeline-node"><div class="node-dot"></div></div>
+    <div class="card-visual">
+      <svg viewBox="0 0 260 220" fill="none">
+        <!-- Petit cercle -->
+        <circle cx="75" cy="120" r="50" stroke="#d4a84b" stroke-width="1.5" fill="rgba(212,168,75,0.06)" class="draw"/>
+        <!-- Grand cercle -->
+        <circle cx="180" cy="120" r="72" stroke="#c45c2e" stroke-width="1.5" fill="rgba(196,92,46,0.06)" class="draw"/>
+        <!-- Rayons -->
+        <line x1="75" y1="120" x2="75" y2="70" stroke="#d4a84b" stroke-width="1.2"/>
+        <line x1="180" y1="120" x2="180" y2="48" stroke="#c45c2e" stroke-width="1.2"/>
+        <!-- Labels r -->
+        <text x="78" y="97" fill="#d4a84b" font-size="11" font-family="EB Garamond,serif" font-style="italic">r₁</text>
+        <text x="183" y="86" fill="#c45c2e" font-size="11" font-family="EB Garamond,serif" font-style="italic">r₂</text>
+        <!-- Points centre -->
+        <circle cx="75" cy="120" r="3" fill="#d4a84b"/>
+        <circle cx="180" cy="120" r="3" fill="#c45c2e"/>
+        <!-- Formula display -->
+        <text x="20" y="210" fill="rgba(255,255,255,0.5)" font-size="9" font-family="EB Garamond,serif">A₁/A₂ = r₁²/r₂²  (démontré par exhaustion)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Prop III–IV -->
+  <div class="entry" id="s4">
+    <div class="card-text">
+      <div class="prop-tag">
+        <span class="prop-num">Prop. III–IV</span>
+        <span class="prop-cat">Exhaustion</span>
+      </div>
+      <h2>Approcher le Cercle par Polygones Inscrits</h2>
+      <p>On inscrit dans le cercle des polygones réguliers de plus en plus de côtés : carré, octogone, 16-gone… À chaque étape, on retranche <strong>plus de la moitié</strong> de l'écart restant entre le polygone et le cercle (Lemme I).</p>
+      <p>À la limite, le polygone inscrit <strong>épuise</strong> le cercle : son aire peut être rendue aussi proche qu'on veut de l'aire du disque. C'est la première démonstration rigoureuse de la limite d'une suite géométrique.</p>
+      <div class="formula">Aire(polygone 2ⁿ côtés) → Aire(cercle) quand n→∞</div>
+    </div>
+    <div class="timeline-node"><div class="node-dot"></div></div>
+    <div class="card-visual">
+      <svg viewBox="0 0 260 220" fill="none">
+        <!-- Cercle -->
+        <circle cx="130" cy="110" r="90" stroke="rgba(255,255,255,0.2)" stroke-width="1" fill="none"/>
+        <!-- Carré inscrit (4 côtés) -->
+        <polygon points="130,20 220,110 130,200 40,110" stroke="rgba(212,168,75,0.35)" stroke-width="1" fill="rgba(212,168,75,0.04)"/>
+        <!-- Octogone inscrit (8 côtés) -->
+        <polygon points="130,20 194,46 220,110 194,174 130,200 66,174 40,110 66,46" stroke="rgba(196,92,46,0.5)" stroke-width="1.2" fill="rgba(196,92,46,0.05)" class="draw"/>
+        <!-- 16-gone (approximé) -->
+        <polygon points="130,20 162,24 194,46 216,76 220,110 216,144 194,174 162,196 130,200 98,196 66,174 44,144 40,110 44,76 66,46 98,24" stroke="#4a7c59" stroke-width="1.5" fill="rgba(74,124,89,0.07)" class="draw"/>
+        <!-- Cercle final -->
+        <circle cx="130" cy="110" r="90" stroke="rgba(255,255,255,0.6)" stroke-width="1" fill="none" stroke-dasharray="4 4" class="pulse"/>
+        <!-- Labels -->
+        <text x="10" y="210" fill="rgba(212,168,75,0.7)" font-size="8">carré → octogone → 16-gone → cercle</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Prop V–VI -->
+  <div class="entry" id="s5">
+    <div class="card-text">
+      <div class="prop-tag">
+        <span class="prop-num">Prop. V–VI</span>
+        <span class="prop-cat">Pyramides</span>
+      </div>
+      <h2>Pyramides &amp; Prismes — Décomposition</h2>
+      <p>Tout <strong>prisme triangulaire</strong> peut être décomposé en trois pyramides de volumes égaux à base triangulaire. Cette décomposition prouve que le volume d'une pyramide est exactement <strong>le tiers</strong> du prisme de même base et hauteur.</p>
+      <p>La méthode consiste à couper le prisme par des plans diagonaux successifs, chaque morceau étant une pyramide dont on montre qu'elle a le même volume qu'une autre par la Prop. VII.</p>
+      <div class="formula">V(pyramide) = ⅓ · B · h</div>
+    </div>
+    <div class="timeline-node"><div class="node-dot"></div></div>
+    <div class="card-visual">
+      <svg viewBox="0 0 260 230" fill="none">
+        <!-- Prisme triangulaire (fil de fer) -->
+        <!-- Base inférieure -->
+        <polygon points="50,190 180,190 115,155" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" fill="rgba(255,255,255,0.03)"/>
+        <!-- Base supérieure -->
+        <polygon points="70,80 200,80 135,45" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" fill="rgba(255,255,255,0.03)"/>
+        <!-- Arêtes latérales -->
+        <line x1="50" y1="190" x2="70" y2="80" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+        <line x1="180" y1="190" x2="200" y2="80" stroke="rgba(255,255,255,0.35)" stroke-width="1"/>
+        <line x1="115" y1="155" x2="135" y2="45" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-dasharray="4 3"/>
+        <!-- Pyramide 1 (colorée) -->
+        <polygon points="50,190 180,190 135,45" stroke="#d4a84b" stroke-width="1.5" fill="rgba(212,168,75,0.08)" class="draw"/>
+        <!-- Pyramide 2 -->
+        <polygon points="115,155 180,190 135,45" stroke="#c45c2e" stroke-width="1.5" fill="rgba(196,92,46,0.08)" class="draw"/>
+        <!-- Pyramide 3 (pointillés) -->
+        <polygon points="50,190 115,155 135,45" stroke="#4a7c59" stroke-width="1.2" fill="rgba(74,124,89,0.06)" stroke-dasharray="4 3" class="draw"/>
+        <!-- Labels -->
+        <text x="90" y="185" fill="#d4a84b" font-size="10">P₁</text>
+        <text x="155" y="165" fill="#c45c2e" font-size="10">P₂</text>
+        <text x="72" y="140" fill="#4a7c59" font-size="10">P₃</text>
+        <text x="40" y="220" fill="rgba(255,255,255,0.5)" font-size="9">Prisme = P₁ + P₂ + P₃ (volumes égaux)</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Prop VII–IX -->
+  <div class="entry" id="s6">
+    <div class="card-text">
+      <div class="prop-tag">
+        <span class="prop-num">Prop. VII–IX</span>
+        <span class="prop-cat">Volumes</span>
+      </div>
+      <h2>Pyramides de même Hauteur — Volumes ∝ Bases</h2>
+      <p>Deux pyramides (ou cônes) de <strong>même hauteur</strong> ont des volumes proportionnels à leurs <strong>aires de base</strong>. Si la base est doublée (même hauteur), le volume double.</p>
+      <p>Réciproquement, deux pyramides de <strong>même base</strong> ont des volumes proportionnels à leurs hauteurs. Ces deux propriétés, combinées, donnent la formule générale V = ⅓·B·h valable pour toute pyramide et tout cône.</p>
+      <div class="formula">V₁/V₂ = B₁/B₂ (même hauteur h)</div>
+    </div>
+    <div class="timeline-node"><div class="node-dot"></div></div>
+    <div class="card-visual">
+      <svg viewBox="0 0 260 230" fill="none">
+        <!-- Pyramide petite base -->
+        <polygon points="80,40 30,200 130,200" stroke="#d4a84b" stroke-width="1.5" fill="rgba(212,168,75,0.08)" class="draw"/>
+        <line x1="80" y1="40" x2="80" y2="200" stroke="rgba(212,168,75,0.4)" stroke-width="1" stroke-dasharray="4 3"/>
+        <!-- Pyramide grande base -->
+        <polygon points="190,40 145,200 235,200" stroke="#c45c2e" stroke-width="1.5" fill="rgba(196,92,46,0.08)" class="draw"/>
+        <line x1="190" y1="40" x2="190" y2="200" stroke="rgba(196,92,46,0.4)" stroke-width="1" stroke-dasharray="4 3"/>
+        <!-- Hauteurs (égales) -->
+        <text x="35" y="125" fill="rgba(212,168,75,0.7)" font-size="10" font-family="EB Garamond,serif" font-style="italic">h</text>
+        <text x="148" y="125" fill="rgba(196,92,46,0.7)" font-size="10" font-family="EB Garamond,serif" font-style="italic">h</text>
+        <!-- Bases -->
+        <text x="55" y="215" fill="#d4a84b" font-size="10">B₁</text>
+        <text x="170" y="215" fill="#c45c2e" font-size="10">B₂ &gt; B₁</text>
+        <!-- Braces bases -->
+        <line x1="30" y1="205" x2="130" y2="205" stroke="#d4a84b" stroke-width="1"/>
+        <line x1="145" y1="205" x2="235" y2="205" stroke="#c45c2e" stroke-width="1.5"/>
+        <!-- Sommet labels -->
+        <circle cx="80" cy="40" r="3" fill="#d4a84b"/>
+        <circle cx="190" cy="40" r="3" fill="#c45c2e"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Prop X–XII -->
+  <div class="entry" id="s7">
+    <div class="card-text">
+      <div class="prop-tag">
+        <span class="prop-num">Prop. X–XII</span>
+        <span class="prop-cat">Solides de révolution</span>
+      </div>
+      <h2>Cône &amp; Cylindre — Volumes et Sections</h2>
+      <p>Un <strong>cône</strong> a un volume égal au tiers du <strong>cylindre</strong> de même base et même hauteur. C'est une conséquence directe de V = ⅓·B·h pour le cône et V = B·h pour le cylindre.</p>
+      <p>Une section d'un cône par un plan parallèle à la base est un disque dont l'aire est proportionnelle au <strong>carré de la distance</strong> au sommet. Ces sections donnent naissance aux coniques (ellipse, parabole, hyperbole).</p>
+      <div class="formula">V_cône = ⅓ · π · r² · h = ⅓ · V_cylindre</div>
+    </div>
+    <div class="timeline-node"><div class="node-dot"></div></div>
+    <div class="card-visual">
+      <svg viewBox="0 0 260 230" fill="none">
+        <!-- Cylindre -->
+        <ellipse cx="80" cy="190" rx="48" ry="12" stroke="#d4a84b" stroke-width="1.2" fill="rgba(212,168,75,0.06)"/>
+        <ellipse cx="80" cy="80" rx="48" ry="12" stroke="#d4a84b" stroke-width="1.2" fill="rgba(212,168,75,0.06)"/>
+        <line x1="32" y1="80" x2="32" y2="190" stroke="#d4a84b" stroke-width="1.2"/>
+        <line x1="128" y1="80" x2="128" y2="190" stroke="#d4a84b" stroke-width="1.2"/>
+        <rect x="32" y="80" width="96" height="110" fill="rgba(212,168,75,0.04)"/>
+        <text x="58" y="140" fill="rgba(212,168,75,0.7)" font-size="10">Cylindre</text>
+        <!-- Cône (même base et h) -->
+        <polygon points="185,20 145,190 225,190" stroke="#c45c2e" stroke-width="1.5" fill="rgba(196,92,46,0.1)" class="draw"/>
+        <ellipse cx="185" cy="190" rx="40" ry="10" stroke="#c45c2e" stroke-width="1.2" fill="rgba(196,92,46,0.05)"/>
+        <!-- Section -->
+        <ellipse cx="185" cy="120" rx="23" ry="6" stroke="#4a7c59" stroke-width="1.2" fill="rgba(74,124,89,0.1)" stroke-dasharray="3 2" class="pulse"/>
+        <text x="145" y="118" fill="#4a7c59" font-size="9">section</text>
+        <!-- Hauteurs -->
+        <line x1="230" y1="20" x2="230" y2="190" stroke="rgba(196,92,46,0.4)" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="233" y="110" fill="rgba(196,92,46,0.7)" font-size="10" font-family="EB Garamond,serif" font-style="italic">h</text>
+        <text x="148" y="215" fill="#c45c2e" font-size="10">Cône = ⅓ cyl.</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Prop XIII–XV -->
+  <div class="entry" id="s8">
+    <div class="card-text">
+      <div class="prop-tag">
+        <span class="prop-num">Prop. XIII–XV</span>
+        <span class="prop-cat">Similitude 3D</span>
+      </div>
+      <h2>Cônes &amp; Cylindres Semblables — Rapports Cubiques</h2>
+      <p>Deux cônes (ou cylindres) sont <strong>semblables</strong> si le rapport hauteur/rayon est le même. Leurs volumes sont dans un rapport égal au <strong>cube</strong> du rapport de similitude k.</p>
+      <p>Exemple : si le rayon et la hauteur doublent (k = 2), le volume est multiplié par 8 = 2³. Les surfaces latérales croissent en k² et les longueurs en k. Cette hiérarchie k / k² / k³ est universelle pour tous les solides semblables.</p>
+      <div class="formula">V₁/V₂ = k³,  S₁/S₂ = k²,  l₁/l₂ = k</div>
+    </div>
+    <div class="timeline-node"><div class="node-dot"></div></div>
+    <div class="card-visual">
+      <svg viewBox="0 0 260 230" fill="none">
+        <!-- Petit cône -->
+        <polygon points="75,70 45,185 105,185" stroke="#d4a84b" stroke-width="1.5" fill="rgba(212,168,75,0.07)" class="draw"/>
+        <ellipse cx="75" cy="185" rx="30" ry="8" stroke="#d4a84b" stroke-width="1.2" fill="rgba(212,168,75,0.05)"/>
+        <!-- Grand cône (k=1.6) -->
+        <polygon points="185,30 140,195 230,195" stroke="#c45c2e" stroke-width="1.8" fill="rgba(196,92,46,0.07)" class="draw"/>
+        <ellipse cx="185" cy="195" rx="45" ry="11" stroke="#c45c2e" stroke-width="1.3" fill="rgba(196,92,46,0.05)"/>
+        <!-- Flèche k -->
+        <line x1="112" y1="130" x2="136" y2="130" stroke="white" stroke-width="1" marker-end="url(#arrowW)"/>
+        <text x="110" y="122" fill="rgba(255,255,255,0.7)" font-size="9">×k</text>
+        <!-- Labels -->
+        <text x="52" y="215" fill="rgba(212,168,75,0.8)" font-size="9">V₁</text>
+        <text x="163" y="215" fill="rgba(196,92,46,0.8)" font-size="9">V₂ = k³ · V₁</text>
+        <!-- k labels -->
+        <text x="58" y="130" fill="rgba(212,168,75,0.6)" font-size="9" font-family="EB Garamond,serif" font-style="italic">r₁, h₁</text>
+        <text x="192" y="115" fill="rgba(196,92,46,0.6)" font-size="9" font-family="EB Garamond,serif" font-style="italic">r₂, h₂</text>
+        <defs>
+          <marker id="arrowW" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto">
+            <path d="M0,0 L5,2.5 L0,5 Z" fill="white"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Prop XVI–XVII -->
+  <div class="entry" id="s9">
+    <div class="card-text">
+      <div class="prop-tag">
+        <span class="prop-num">Prop. XVI–XVII</span>
+        <span class="prop-cat">Sphère</span>
+      </div>
+      <h2>Sphère — Surface, Volume &amp; Comparaisons</h2>
+      <p>La <strong>surface</strong> d'une sphère est égale à 4 fois l'aire du grand cercle (4πr²). Son <strong>volume</strong> est les deux tiers du volume du cylindre circonscrit (V = 4/3·π·r³), résultat qu'Archimède considérait comme sa plus belle découverte.</p>
+      <p>Deux sphères ont leurs surfaces dans le rapport des <strong>carrés</strong> de leurs rayons, et leurs volumes dans le rapport des <strong>cubes</strong>. La sphère est le solide de plus grand volume pour une surface donnée.</p>
+      <div class="formula">S = 4πr²   —   V = (4/3)πr³</div>
+    </div>
+    <div class="timeline-node"><div class="node-dot"></div></div>
+    <div class="card-visual">
+      <svg viewBox="0 0 260 230" fill="none">
+        <!-- Cylindre circonscrit -->
+        <ellipse cx="130" cy="50" rx="72" ry="18" stroke="rgba(255,255,255,0.2)" stroke-width="1" fill="none" stroke-dasharray="4 3"/>
+        <ellipse cx="130" cy="185" rx="72" ry="18" stroke="rgba(255,255,255,0.2)" stroke-width="1" fill="none"/>
+        <line x1="58" y1="50" x2="58" y2="185" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="4 3"/>
+        <line x1="202" y1="50" x2="202" y2="185" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="4 3"/>
+        <!-- Sphère -->
+        <circle cx="130" cy="117" r="72" stroke="#c45c2e" stroke-width="1.5" fill="rgba(196,92,46,0.07)" class="draw"/>
+        <!-- Grand cercle (équateur) -->
+        <ellipse cx="130" cy="117" rx="72" ry="18" stroke="rgba(196,92,46,0.5)" stroke-width="1" fill="none" stroke-dasharray="4 3"/>
+        <!-- Méridien -->
+        <ellipse cx="130" cy="117" rx="18" ry="72" stroke="rgba(212,168,75,0.3)" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
+        <!-- Rayon -->
+        <line x1="130" y1="117" x2="202" y2="117" stroke="#d4a84b" stroke-width="1.5"/>
+        <circle cx="130" cy="117" r="3" fill="#d4a84b"/>
+        <text x="158" y="113" fill="#d4a84b" font-size="11" font-family="EB Garamond,serif" font-style="italic">r</text>
+        <!-- Labels -->
+        <text x="30" y="218" fill="rgba(196,92,46,0.8)" font-size="9">V = ⅔ V_cylindre =  4/3 · π · r³</text>
+        <!-- 4 cercles = surface -->
+        <text x="155" y="55" fill="rgba(212,168,75,0.7)" font-size="9">S = 4πr²</text>
+      </svg>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  Aires &amp; Volumes · Méthode d'exhaustion · Propositions Lem. I — XVII
+</footer>
+
+<script>
+  const entries = document.querySelectorAll('.entry');
+  const io = new IntersectionObserver(es => {
+    es.forEach(e => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), 80);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+  entries.forEach(e => io.observe(e));
+</script>
+</body>
+</html>
